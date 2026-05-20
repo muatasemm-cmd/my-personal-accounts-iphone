@@ -41,6 +41,7 @@
         debtEntries: document.getElementById("debtEntries"),
         debtSummary: document.getElementById("debtSummary"),
         commitmentEntries: document.getElementById("commitmentEntries"),
+        setupHelper: document.getElementById("setupHelper"),
         toast: document.getElementById("toastMessage"),
         backupStatus: document.getElementById("backupStatus"),
         safeModeToggle: document.getElementById("safeModeToggle"),
@@ -50,7 +51,8 @@
         budgetUsageHint: document.getElementById("budgetUsageHint"),
         savingUsagePercent: document.getElementById("savingUsagePercent"),
         savingUsageBar: document.getElementById("savingUsageBar"),
-        savingUsageHint: document.getElementById("savingUsageHint")
+        savingUsageHint: document.getElementById("savingUsageHint"),
+        startSetupButton: document.getElementById("startSetupButton")
     };
 
     let unlocked = !state.profile.passcode || !state.profile.safeMode;
@@ -95,6 +97,7 @@
         document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
         document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
         document.getElementById("installHintButton").addEventListener("click", showInstallHint);
+        refs.startSetupButton.addEventListener("click", startSetup);
         refs.safeModeToggle.addEventListener("click", toggleSafeMode);
         refs.hideNumbersToggle.addEventListener("click", toggleHideNumbers);
         refs.unlockForm.addEventListener("submit", unlock);
@@ -248,7 +251,12 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم Add to Home Screen.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية.");
+    }
+
+    function startSetup() {
+        switchPanel("plan");
+        document.getElementById("profileName").focus();
     }
 
     function exportBackup() {
@@ -295,7 +303,13 @@
 
     function render() {
         const hidden = !!state.profile.hideNumbers;
-        refs.deviceTitle.textContent = state.profile.deviceName || "هذا الجهاز غير مهيأ بعد";
+        const isConfigured = !!state.profile.deviceName;
+        const hasEntries = !!(state.incomes.length || state.expenses.length || state.debts.length || state.commitments.length);
+        const needsSetup = !isConfigured && !hasEntries;
+
+        refs.deviceTitle.textContent = state.profile.deviceName || "ابدأ إعداد هذا الجهاز";
+        refs.setupHelper.hidden = !needsSetup;
+        refs.startSetupButton.hidden = !needsSetup;
         setValue("profileName", state.profile.deviceName);
         setValue("profileCurrency", state.profile.currency || "₪");
         setValue("profileBudget", state.profile.monthlyBudget || "");
@@ -339,11 +353,13 @@
             ? `${hidden ? "••••" : formatMoney(savingCurrent, currency)} من أصل ${hidden ? "••••" : formatMoney(state.profile.savingGoal, currency)}`
             : "لا يوجد هدف توفير محدد بعد.";
 
-        refs.todayAlert.textContent = dueSoon.length
-            ? `عندك ${dueSoon.length} التزام قريب خلال 3 أيام.`
-            : state.profile.monthlyBudget > 0 && monthExpense > state.profile.monthlyBudget
-                ? "تنبيه: تجاوزت سقف المصروف الشهري."
-                : "لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.";
+        refs.todayAlert.textContent = needsSetup
+            ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
+            : dueSoon.length
+                ? `عندك ${dueSoon.length} التزام قريب خلال 3 أيام.`
+                : state.profile.monthlyBudget > 0 && monthExpense > state.profile.monthlyBudget
+                    ? "تنبيه: تجاوزت سقف المصروف الشهري."
+                    : "لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.";
 
         renderOperations(currency, hidden);
         renderDebts(currency, hidden);
