@@ -1,4 +1,4 @@
-const CACHE_NAME = "personalaccounts-iphone-v6";
+const CACHE_NAME = "personalaccounts-iphone-v8";
 const CORE = [
   "./",
   "./index.html",
