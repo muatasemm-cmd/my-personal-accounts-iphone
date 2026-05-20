@@ -1,0 +1,19 @@
+{
+  "name": "حساباتي | آيفون",
+  "short_name": "حساباتي",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f172a",
+  "lang": "ar",
+  "dir": "rtl",
+  "description": "نسخة iPhone-first من حساباتي، محلية بالكامل على الجهاز مع خصوصية ونسخ احتياطي JSON.",
+  "icons": [
+    {
+      "src": "./favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}

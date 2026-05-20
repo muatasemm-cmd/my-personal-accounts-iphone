@@ -1,0 +1,355 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>حساباتي | آيفون</title>
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="حساباتي" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" href="./favicon.ico" />
+    <link rel="stylesheet" href="./css/app.css" />
+</head>
+<body>
+    <div class="app-shell" id="appShell">
+        <div class="privacy-screen" id="privacyScreen" hidden>
+            <div class="privacy-card">
+                <span class="privacy-badge">الوضع الآمن</span>
+                <h1>حساباتي</h1>
+                <p>أدخل رمز هذا الجهاز للمتابعة.</p>
+                <form id="unlockForm" class="stack">
+                    <input id="unlockCode" class="input center" type="password" inputmode="numeric" maxlength="12" placeholder="رمز القفل" />
+                    <button class="button button-primary" type="submit">فتح التطبيق</button>
+                    <p class="helper error" id="unlockError"></p>
+                </form>
+            </div>
+        </div>
+
+        <main class="app-main" id="appMain">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">نسخة آيفون أولية</p>
+                    <h1>حساباتي</h1>
+                    <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button class="chip" id="safeModeToggle" type="button">وضع آمن</button>
+                    <button class="chip chip-dark" id="hideNumbersToggle" type="button">إخفاء الأرقام</button>
+                </div>
+            </header>
+
+            <section class="hero-card">
+                <div class="hero-head">
+                    <div>
+                        <p class="eyebrow">ملخص اليوم والشهر</p>
+                        <h2 id="deviceTitle">هذا الجهاز غير مهيأ بعد</h2>
+                    </div>
+                    <button class="button button-ghost" id="installHintButton" type="button">تثبيت على الشاشة</button>
+                </div>
+                <div class="summary-grid">
+                    <article class="metric-card">
+                        <span>رصيد الشهر</span>
+                        <strong data-money id="monthBalanceValue">₪ 0.00</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>مصروف اليوم</span>
+                        <strong data-money id="todayExpenseValue">₪ 0.00</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>التزامات قريبة</span>
+                        <strong id="dueSoonValue">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>صافي الديون</span>
+                        <strong data-money id="netDebtValue">₪ 0.00</strong>
+                    </article>
+                </div>
+                <div class="alert-card" id="todayAlert">لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.</div>
+            </section>
+
+            <section class="quick-actions-card">
+                <button class="quick-action" type="button" data-quick-panel="money" data-quick-money-tab="expense">
+                    <strong>+ مصروف</strong>
+                    <span>تسجيل صرف سريع</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="money" data-quick-money-tab="income">
+                    <strong>+ دخل</strong>
+                    <span>راتب أو تحويل</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="debts">
+                    <strong>+ دين</strong>
+                    <span>لشخص أو دفعة</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="plan">
+                    <strong>+ التزام</strong>
+                    <span>قسط أو فاتورة</span>
+                </button>
+            </section>
+
+            <section class="panel is-active" data-panel="home">
+                <div class="section-head">
+                    <h3>الرئيسية</h3>
+                    <p>آخر العمليات، الالتزامات القريبة، ونظرة سريعة على الوضع.</p>
+                </div>
+                <div class="progress-grid">
+                    <article class="progress-card">
+                        <div class="progress-head">
+                            <span>استهلاك سقف المصروف</span>
+                            <strong id="budgetUsagePercent">0%</strong>
+                        </div>
+                        <div class="progress-track"><div class="progress-bar danger" id="budgetUsageBar"></div></div>
+                        <small id="budgetUsageHint">لا يوجد سقف شهري محدد بعد.</small>
+                    </article>
+                    <article class="progress-card">
+                        <div class="progress-head">
+                            <span>التقدم نحو التوفير</span>
+                            <strong id="savingUsagePercent">0%</strong>
+                        </div>
+                        <div class="progress-track"><div class="progress-bar success" id="savingUsageBar"></div></div>
+                        <small id="savingUsageHint">لا يوجد هدف توفير محدد بعد.</small>
+                    </article>
+                </div>
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>آخر العمليات</h4>
+                    </div>
+                    <div id="recentOperations" class="list-stack"></div>
+                </div>
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>الالتزامات القادمة</h4>
+                    </div>
+                    <div id="upcomingCommitments" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="money">
+                <div class="section-head">
+                    <h3>الدخل والمصاريف</h3>
+                    <p>إضافة دخل ومصروف بسرعة مع سجل حديث واضح.</p>
+                </div>
+
+                <div class="tabs-inline">
+                    <button class="mini-tab is-active" data-money-tab="expense" type="button">مصروف</button>
+                    <button class="mini-tab" data-money-tab="income" type="button">دخل</button>
+                </div>
+
+                <form class="card-form money-form is-active" id="expenseForm" data-money-form="expense">
+                    <label class="field">
+                        <span>العنوان</span>
+                        <input id="expenseTitle" class="input" type="text" placeholder="خضار، بنزين، مدرسة..." required />
+                    </label>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="expenseAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="expenseDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>التصنيف</span>
+                            <input id="expenseCategory" class="input" type="text" placeholder="بيت، سيارة، أكل..." />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="expenseNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-danger" type="submit">حفظ المصروف</button>
+                </form>
+
+                <form class="card-form money-form" id="incomeForm" data-money-form="income">
+                    <label class="field">
+                        <span>العنوان</span>
+                        <input id="incomeTitle" class="input" type="text" placeholder="راتب، حوالة، هدية..." required />
+                    </label>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="incomeAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="incomeDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>التصنيف</span>
+                            <input id="incomeCategory" class="input" type="text" placeholder="راتب، إضافي، تحويل..." />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="incomeNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-primary" type="submit">حفظ الدخل</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>سجل العمليات</h4>
+                    </div>
+                    <div class="tabs-inline compact-tabs">
+                        <button class="mini-tab is-active" data-log-filter="all" type="button">الكل</button>
+                        <button class="mini-tab" data-log-filter="expense" type="button">مصروف</button>
+                        <button class="mini-tab" data-log-filter="income" type="button">دخل</button>
+                    </div>
+                    <div id="moneyEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="debts">
+                <div class="section-head">
+                    <h3>الأشخاص والديون</h3>
+                    <p>لكل شخص سجل واضح: إله عليك، إليك عليه، والرصيد النهائي.</p>
+                </div>
+
+                <form class="card-form" id="debtForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الشخص</span>
+                            <input id="debtPerson" class="input" type="text" placeholder="مثال: أحمد" required />
+                        </label>
+                        <label class="field">
+                            <span>نوع الحركة</span>
+                            <select id="debtType" class="input">
+                                <option value="for-me">إلي عليه</option>
+                                <option value="on-me">عليّ إله</option>
+                                <option value="paid-to-me">دفع لي</option>
+                                <option value="paid-by-me">دفعت له</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="debtAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="debtDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span>ملاحظة</span>
+                        <input id="debtNote" class="input" type="text" placeholder="مثال: دفعة جزئية" />
+                    </label>
+                    <button class="button button-primary" type="submit">حفظ الحركة</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>كشف الديون</h4>
+                    </div>
+                    <div class="summary-inline" id="debtSummary"></div>
+                    <div id="debtEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="plan">
+                <div class="section-head">
+                    <h3>الخطة الشهرية والالتزامات</h3>
+                    <p>سقف الصرف، هدف التوفير، والأقساط التي يجب متابعتها.</p>
+                </div>
+
+                <form class="card-form" id="planForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الجهاز / الحساب</span>
+                            <input id="profileName" class="input" type="text" placeholder="آيفون 16 - حسابي" required />
+                        </label>
+                        <label class="field">
+                            <span>العملة</span>
+                            <input id="profileCurrency" class="input" type="text" value="₪" maxlength="10" />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>سقف المصروف الشهري</span>
+                            <input id="profileBudget" class="input" type="text" inputmode="decimal" placeholder="0.00" />
+                        </label>
+                        <label class="field">
+                            <span>هدف التوفير</span>
+                            <input id="profileSavingGoal" class="input" type="text" inputmode="decimal" placeholder="0.00" />
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span>رمز قفل اختياري</span>
+                        <input id="profilePasscode" class="input" type="password" inputmode="numeric" maxlength="12" placeholder="1234" />
+                    </label>
+                    <button class="button button-primary" type="submit">حفظ الخطة والإعدادات</button>
+                </form>
+
+                <form class="card-form" id="commitmentForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الالتزام</span>
+                            <input id="commitmentName" class="input" type="text" placeholder="إيجار، قسط..." required />
+                        </label>
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="commitmentAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>تاريخ الاستحقاق</span>
+                            <input id="commitmentDate" class="input" type="date" required />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظات</span>
+                            <input id="commitmentNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-warning" type="submit">حفظ الالتزام</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>سجل الالتزامات</h4>
+                    </div>
+                    <div id="commitmentEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="more">
+                <div class="section-head">
+                    <h3>النسخ والخصوصية</h3>
+                    <p>نسخة احتياطية، استرجاع، ومسح آمن لبيانات هذا الجهاز.</p>
+                </div>
+
+                <div class="card-form">
+                    <button class="button button-primary" id="exportBackupButton" type="button">تصدير نسخة JSON</button>
+                    <label class="button button-outline file-button">
+                        استيراد نسخة
+                        <input id="importBackupInput" type="file" accept="application/json" hidden />
+                    </label>
+                    <button class="button button-outline" id="lockDeviceButton" type="button">قفل الجهاز الآن</button>
+                    <button class="button button-danger" id="resetDeviceButton" type="button">تصفير بيانات هذا الجهاز</button>
+                    <p class="helper" id="backupStatus">آخر نسخة: لا يوجد بعد.</p>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item is-active" type="button" data-panel-target="home"><span>الرئيسية</span></button>
+            <button class="nav-item" type="button" data-panel-target="money"><span>الحركات</span></button>
+            <button class="nav-item" type="button" data-panel-target="debts"><span>الديون</span></button>
+            <button class="nav-item" type="button" data-panel-target="plan"><span>الخطة</span></button>
+            <button class="nav-item" type="button" data-panel-target="more"><span>المزيد</span></button>
+        </nav>
+
+        <div class="toast" id="toastMessage" hidden></div>
+    </div>
+
+    <script src="./js/app.js"></script>
+</body>
+</html>
