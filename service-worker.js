@@ -3,8 +3,8 @@ const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./app.css",
-  "./app.js",
+  "./css/app.css",
+  "./js/app.js",
   "./favicon.ico"
 ];
 
