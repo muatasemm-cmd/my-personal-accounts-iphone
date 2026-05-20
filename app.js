@@ -1,7 +1,11 @@
 ﻿(function () {
+    const CACHE_RESET_KEY = "personalaccounts.iphone.cache-reset.v6";
+
     if ("serviceWorker" in navigator) {
         window.addEventListener("load", function () {
-            navigator.serviceWorker.register("./service-worker.js").catch(function () { });
+            ensureFreshCache().finally(function () {
+                navigator.serviceWorker.register("./service-worker.js?v=6").catch(function () { });
+            });
         });
     }
 
@@ -62,6 +66,32 @@
     bind();
     seedDates();
     render();
+
+    function ensureFreshCache() {
+        if (sessionStorage.getItem(CACHE_RESET_KEY) === "done") {
+            return Promise.resolve();
+        }
+
+        sessionStorage.setItem(CACHE_RESET_KEY, "done");
+
+        const unregisterPromise = "serviceWorker" in navigator
+            ? navigator.serviceWorker.getRegistrations().then((registrations) =>
+                Promise.all(registrations.map((registration) => registration.unregister()))
+            ).catch(function () { })
+            : Promise.resolve();
+
+        const cachePromise = "caches" in window
+            ? caches.keys().then((keys) =>
+                Promise.all(
+                    keys
+                        .filter((key) => key.indexOf("personalaccounts-iphone") !== -1)
+                        .map((key) => caches.delete(key))
+                )
+            ).catch(function () { })
+            : Promise.resolve();
+
+        return Promise.all([unregisterPromise, cachePromise]);
+    }
 
     function bind() {
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
@@ -588,3 +618,4 @@
             .replace(/'/g, "&#39;");
     }
 })();
+
