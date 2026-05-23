@@ -1161,6 +1161,8 @@ body {
     let currentMoneySearch = "";
     let currentDebtSearch = "";
     let showArchivedPeople = false;
+    let unlocked = !state.profile.passcode || !state.profile.safeMode;
+    let toastTimer = 0;
 
     function bind() {
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
@@ -1872,6 +1874,10 @@ body {
             .replace(/\"/g, "&quot;")
             .replace(/'/g, "&#39;");
     }
+
+    bind();
+    seedDates();
+    render();
 })();
 
 
