@@ -1874,7 +1874,9 @@ body {
                 item.title,
                 operationMetaText(item),
                 hidden ? "••••" : formatMoney(item.amount, currency),
-                item.kind === "expense" ? "tone-expense" : "tone-income"
+                item.kind === "expense" ? "tone-expense" : "tone-income",
+                "",
+                true
             )).join("")
             : emptyState("لا توجد عمليات بعد.");
 
@@ -1901,7 +1903,8 @@ body {
                 `
                 <button class="inline-button neutral" type="button" data-edit-money="${escapeHtml(item.kind)}:${escapeHtml(item.id)}">تعديل</button>
                 <button class="inline-button danger" type="button" data-delete-money="${escapeHtml(item.kind)}:${escapeHtml(item.id)}">حذف</button>
-                `
+                `,
+                true
             )).join("")
             : emptyState("لا توجد عمليات محفوظة.");
 
@@ -1921,10 +1924,10 @@ body {
 
     function operationMetaText(item) {
         const parts = [
-            item.kind === "expense" ? "مصروف" : "دخل",
-            displayDate(item.date)
+            escapeHtml(item.kind === "expense" ? "مصروف" : "دخل"),
+            escapeHtml(displayDate(item.date))
         ];
-        if (item.category) parts.push(item.category);
+        if (item.category) parts.push(escapeHtml(item.category));
         const badge = operationDateBadge(item.date);
         const text = parts.join(" · ");
         return badge ? `${text} ${badge}` : text;
@@ -2112,8 +2115,8 @@ body {
         });
     }
 
-    function listItemMarkup(title, meta, valueText, tone, actions = "") {
-        return `<div class="list-item"><div><div class="list-title">${escapeHtml(title)}</div><div class="list-meta">${escapeHtml(meta)}</div></div><div class="list-actions"><div class="list-value ${tone}">${escapeHtml(valueText)}</div>${actions}</div></div>`;
+    function listItemMarkup(title, meta, valueText, tone, actions = "", metaIsHtml = false) {
+        return `<div class="list-item"><div><div class="list-title">${escapeHtml(title)}</div><div class="list-meta">${metaIsHtml ? meta : escapeHtml(meta)}</div></div><div class="list-actions"><div class="list-value ${tone}">${escapeHtml(valueText)}</div>${actions}</div></div>`;
     }
 
     function debtInstallmentItemMarkup(item, currency, hidden) {
