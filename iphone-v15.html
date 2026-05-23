@@ -463,6 +463,28 @@ body {
     line-height: 1.6;
 }
 
+.meta-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 22px;
+    padding: 0 8px;
+    margin-inline-start: 6px;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 900;
+    vertical-align: middle;
+}
+
+.meta-badge.future {
+    background: #fff4e5;
+    color: var(--warning);
+}
+
+.meta-badge.other-month {
+    background: #eef4ff;
+    color: var(--primary-dark);
+}
+
 .list-value {
     text-align: left;
     font-weight: 900;
@@ -744,7 +766,7 @@ body {
                 </div>
                 <div class="summary-grid">
                     <article class="metric-card">
-                        <span>الباقي معك الآن</span>
+                        <span>الباقي هذا الشهر</span>
                         <strong data-money id="monthBalanceValue">₪ 0.00</strong>
                     </article>
                     <article class="metric-card">
@@ -761,7 +783,7 @@ body {
                     </article>
                 </div>
                 <div class="alert-card" id="todayAlert">لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.</div>
-                <p class="helper" id="balanceHelper">هذا هو الرصيد الحالي بعد طرح مصاريف الشهر من دخل الشهر.</p>
+                <p class="helper" id="balanceHelper">هذا هو المتبقي لهذا الشهر فقط بعد طرح مصاريف الشهر من دخل الشهر.</p>
             </section>
 
             <section class="quick-actions-card">
@@ -1825,7 +1847,7 @@ body {
             : "لا يوجد هدف توفير محدد بعد.";
         refs.balanceHelper.textContent = hidden
             ? "المتبقي الحالي مخفي الآن."
-            : `دخل هذا الشهر ${formatMoney(monthIncome, currency)} - مصروف هذا الشهر ${formatMoney(monthExpense, currency)} = الباقي معك الآن ${formatMoney(monthBalance, currency)}.`;
+            : `دخل هذا الشهر ${formatMoney(monthIncome, currency)} - مصروف هذا الشهر ${formatMoney(monthExpense, currency)} = الباقي هذا الشهر ${formatMoney(monthBalance, currency)}.`;
 
         refs.todayAlert.textContent = needsSetup
             ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
@@ -1850,7 +1872,7 @@ body {
         refs.recentOperations.innerHTML = recent.length
             ? recent.map((item) => listItemMarkup(
                 item.title,
-                `${item.kind === "expense" ? "مصروف" : "دخل"} · ${displayDate(item.date)}${item.category ? ` · ${item.category}` : ""}`,
+                operationMetaText(item),
                 hidden ? "••••" : formatMoney(item.amount, currency),
                 item.kind === "expense" ? "tone-expense" : "tone-income"
             )).join("")
@@ -1873,7 +1895,7 @@ body {
         refs.moneyEntries.innerHTML = moneyLog.length
             ? moneyLog.map((item) => listItemMarkup(
                 item.title,
-                `${item.kind === "expense" ? "مصروف" : "دخل"} · ${displayDate(item.date)}${item.category ? ` · ${item.category}` : ""}`,
+                operationMetaText(item),
                 hidden ? "••••" : formatMoney(item.amount, currency),
                 item.kind === "expense" ? "tone-expense" : "tone-income",
                 `
@@ -1895,6 +1917,34 @@ body {
                 deleteMoney(kind, id);
             });
         });
+    }
+
+    function operationMetaText(item) {
+        const parts = [
+            item.kind === "expense" ? "مصروف" : "دخل",
+            displayDate(item.date)
+        ];
+        if (item.category) parts.push(item.category);
+        const badge = operationDateBadge(item.date);
+        const text = parts.join(" · ");
+        return badge ? `${text} ${badge}` : text;
+    }
+
+    function operationDateBadge(dateString) {
+        if (!dateString) return "";
+        const target = new Date(dateString);
+        const today = new Date();
+        const targetMonth = target.getMonth();
+        const targetYear = target.getFullYear();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+        if (targetYear === currentYear && targetMonth === currentMonth) {
+            return "";
+        }
+        if (target > today) {
+            return '<span class="meta-badge future">شهر قادم</span>';
+        }
+        return '<span class="meta-badge other-month">شهر آخر</span>';
     }
 
     function renderDebts(currency, hidden) {
