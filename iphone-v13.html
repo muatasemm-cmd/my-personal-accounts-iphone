@@ -581,6 +581,10 @@ body {
     margin-top: 12px;
 }
 
+.schedule-form-anchor {
+    scroll-margin-top: 18px;
+}
+
 .summary-pill {
     min-height: 44px;
     padding: 0 16px;
@@ -931,7 +935,7 @@ body {
                     <button class="button button-primary" type="submit">حفظ الحركة</button>
                 </form>
 
-                <form class="card-form schedule-form" id="debtPlanForm">
+                <form class="card-form schedule-form schedule-form-anchor" id="debtPlanForm">
                     <div class="section-head compact">
                         <h4>خطة سداد دين</h4>
                         <p>قسّط الدين على دفعات، وخلي النظام يتابع المواعيد والتأخير والدفع المتأخر.</p>
@@ -1168,6 +1172,7 @@ body {
         debtEntries: document.getElementById("debtEntries"),
         debtInstallmentEntries: document.getElementById("debtInstallmentEntries"),
         debtSummary: document.getElementById("debtSummary"),
+        debtPlanForm: document.getElementById("debtPlanForm"),
         debtSearchInput: document.getElementById("debtSearchInput"),
         showArchivedPeopleToggle: document.getElementById("showArchivedPeopleToggle"),
         peopleOverview: document.getElementById("peopleOverview"),
@@ -1647,6 +1652,9 @@ body {
         refs.peopleOverview.querySelectorAll("[data-restore-person]").forEach((button) => {
             button.addEventListener("click", () => toggleArchivePerson(button.getAttribute("data-restore-person")));
         });
+        refs.peopleOverview.querySelectorAll("[data-schedule-person]").forEach((button) => {
+            button.addEventListener("click", () => prepareDebtSchedule(button.getAttribute("data-schedule-person")));
+        });
 
         let debtItems = state.debts.slice();
         if (!showArchivedPeople) {
@@ -1787,6 +1795,7 @@ body {
                 <div class="list-value ${person.net >= 0 ? "tone-income" : "tone-expense"}">${escapeHtml(hidden ? "••••" : formatMoney(person.net, currency))}</div>
             </div>
             <div class="person-actions">
+                ${person.net < 0 ? `<button class="inline-button success" type="button" data-schedule-person="${escapeHtml(person.name)}">جدولة الدين</button>` : ""}
                 <button class="inline-button neutral" type="button" ${person.archived ? `data-restore-person="${escapeHtml(person.name)}"` : `data-archive-person="${escapeHtml(person.name)}"`}>
                     ${person.archived ? "استرجاع" : "أرشفة"}
                 </button>
@@ -1921,6 +1930,32 @@ body {
         saveState();
         render();
         toast(archived ? "تم استرجاع الشخص." : "تمت أرشفة الشخص.");
+    }
+
+    function prepareDebtSchedule(name) {
+        if (!name) return;
+        const personRows = buildPeopleOverview();
+        const person = personRows.find((item) => item.name === name);
+        if (!person) {
+            toast("تعذر العثور على رصيد هذا الشخص.");
+            return;
+        }
+        if (person.net >= 0) {
+            toast("هذا الشخص لا يظهر عليك رصيدًا يحتاج إلى جدولة.");
+            return;
+        }
+
+        setValue("debtPlanPerson", person.name);
+        setValue("debtPlanTotal", Math.abs(person.net).toFixed(2));
+        if (!value("debtPlanCount")) setValue("debtPlanCount", "4");
+        if (!value("debtPlanStartDate")) setValue("debtPlanStartDate", dateValue(new Date()));
+        switchPanel("debts");
+        window.setTimeout(() => {
+            refs.debtPlanForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+            const target = document.getElementById("debtPlanCount");
+            if (target) target.focus();
+        }, 120);
+        toast(`تم تجهيز خطة سداد لـ ${name}.`);
     }
 
     function commitmentItemMarkup(item, currency, hidden) {
