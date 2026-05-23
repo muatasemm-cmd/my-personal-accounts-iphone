@@ -833,8 +833,24 @@ body {
 
                 <form class="card-form money-form is-active" id="expenseForm" data-money-form="expense">
                     <label class="field">
-                        <span>العنوان</span>
-                        <input id="expenseTitle" class="input" type="text" placeholder="خضار، بنزين، مدرسة..." required />
+                        <span>التصنيف</span>
+                        <select id="expenseCategory" class="input">
+                            <option value="">اختر التصنيف...</option>
+                            <option value="أكل">أكل</option>
+                            <option value="بيت">بيت</option>
+                            <option value="مدارس">مدارس</option>
+                            <option value="مواصلات">مواصلات</option>
+                            <option value="علاج">علاج</option>
+                            <option value="فواتير">فواتير</option>
+                            <option value="أولاد">أولاد</option>
+                            <option value="مجموعة أغراض">مجموعة أغراض</option>
+                            <option value="متفرقات">متفرقات</option>
+                            <option value="طوارئ">طوارئ</option>
+                        </select>
+                    </label>
+                    <label class="field">
+                        <span>أو أضف تصنيفًا جديدًا سريعًا</span>
+                        <input id="expenseCustomCategory" class="input" type="text" placeholder="مثال: قهوة، هدية، حلاقة..." />
                     </label>
                     <div class="field-grid">
                         <label class="field">
@@ -846,28 +862,10 @@ body {
                             <input id="expenseDate" class="input" type="date" required />
                         </label>
                     </div>
-                    <div class="field-grid">
-                        <label class="field">
-                            <span>التصنيف</span>
-                            <select id="expenseCategory" class="input">
-                                <option value="">اختر التصنيف...</option>
-                                <option value="أكل">أكل</option>
-                                <option value="بيت">بيت</option>
-                                <option value="مدارس">مدارس</option>
-                                <option value="مواصلات">مواصلات</option>
-                                <option value="علاج">علاج</option>
-                                <option value="فواتير">فواتير</option>
-                                <option value="أولاد">أولاد</option>
-                                <option value="مجموعة أغراض">مجموعة أغراض</option>
-                                <option value="متفرقات">متفرقات</option>
-                                <option value="طوارئ">طوارئ</option>
-                            </select>
-                        </label>
-                        <label class="field">
-                            <span>ملاحظة</span>
-                            <input id="expenseNote" class="input" type="text" placeholder="اختياري" />
-                        </label>
-                    </div>
+                    <label class="field">
+                        <span>ملاحظة</span>
+                        <input id="expenseNote" class="input" type="text" placeholder="بيض + خبز + لبن، أو أي تفصيل إضافي" />
+                    </label>
                     <div class="form-actions">
                         <button class="button button-danger" id="expenseSubmitButton" type="submit">حفظ المصروف</button>
                         <button class="button button-outline" id="expenseCancelEditButton" type="button" hidden>إلغاء التعديل</button>
@@ -1319,12 +1317,19 @@ body {
 
     function onExpenseSubmit(event) {
         event.preventDefault();
+        const customCategory = value("expenseCustomCategory");
+        const selectedCategory = value("expenseCategory");
+        const finalCategory = customCategory || selectedCategory;
+        if (!finalCategory) {
+            toast("اختر تصنيفًا أو أضف تصنيفًا جديدًا.");
+            return;
+        }
         const isEditing = !!editingExpenseId;
         const payload = {
-            title: value("expenseTitle"),
+            title: finalCategory,
             amount: amount("expenseAmount"),
             date: value("expenseDate"),
-            category: value("expenseCategory"),
+            category: finalCategory,
             note: value("expenseNote")
         };
         if (editingExpenseId) {
@@ -1586,6 +1591,8 @@ body {
         editingExpenseId = "";
         document.getElementById("expenseForm").reset();
         seedDates();
+        setValue("expenseCategory", "");
+        setValue("expenseCustomCategory", "");
         setFormEditing(refs.expenseSubmitButton, refs.expenseCancelEditButton, false, "حفظ التعديل", "حفظ المصروف");
     }
 
@@ -1625,13 +1632,20 @@ body {
         switchMoneyTab(kind);
         if (kind === "expense") {
             editingExpenseId = id;
-            setValue("expenseTitle", item.title);
             setValue("expenseAmount", item.amount);
             setValue("expenseDate", item.date);
-            setValue("expenseCategory", item.category || "");
+            const presetCategories = ["أكل", "بيت", "مدارس", "مواصلات", "علاج", "فواتير", "أولاد", "مجموعة أغراض", "متفرقات", "طوارئ"];
+            const categoryValue = item.category || item.title || "";
+            if (presetCategories.includes(categoryValue)) {
+                setValue("expenseCategory", categoryValue);
+                setValue("expenseCustomCategory", "");
+            } else {
+                setValue("expenseCategory", "");
+                setValue("expenseCustomCategory", categoryValue);
+            }
             setValue("expenseNote", item.note || "");
             setFormEditing(refs.expenseSubmitButton, refs.expenseCancelEditButton, true, "حفظ التعديل", "حفظ المصروف");
-            document.getElementById("expenseTitle")?.focus();
+            document.getElementById("expenseCategory")?.focus();
         } else {
             editingIncomeId = id;
             setValue("incomeTitle", item.title);
