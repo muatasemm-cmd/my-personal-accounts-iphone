@@ -1,0 +1,2109 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>حساباتي | آيفون | v14</title>
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="حساباتي v14" />
+    <link rel="icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" href="./favicon.ico" />
+    <style>
+:root {
+    --bg: #f5f7fb;
+    --surface: rgba(255, 255, 255, 0.88);
+    --surface-strong: #ffffff;
+    --line: #dbe4f0;
+    --text: #132238;
+    --muted: #6b7280;
+    --primary: #1d4ed8;
+    --primary-dark: #163da8;
+    --danger: #dc2626;
+    --success: #15803d;
+    --warning: #b45309;
+    --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    --radius-xl: 28px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+}
+
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "SF Pro Display", "Segoe UI", Tahoma, Arial, sans-serif;
+    background:
+        radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 28%),
+        radial-gradient(circle at top left, rgba(245, 158, 11, 0.10), transparent 24%),
+        linear-gradient(180deg, #f8fafc 0%, #eef4fb 48%, #f8fbff 100%);
+    color: var(--text);
+}
+
+.app-shell {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 14px calc(env(safe-area-inset-bottom, 0px) + 100px);
+}
+
+.app-main,
+.panel,
+.stack,
+.list-stack {
+    display: grid;
+    gap: 14px;
+}
+
+.topbar,
+.hero-card,
+.quick-actions-card,
+.card-form,
+.list-card,
+.privacy-card,
+.metric-card,
+.alert-card,
+.progress-card {
+    background: var(--surface);
+    border: 1px solid rgba(219, 228, 240, 0.9);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.topbar {
+    padding: 18px 18px 16px;
+    margin-bottom: 14px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(248,251,255,0.92));
+}
+
+.topbar h1,
+.privacy-card h1,
+.hero-card h2,
+.section-head h3,
+.section-head h4 {
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+}
+
+.topbar h1 { font-size: 2.2rem; line-height: 1.05; }
+.hero-card h2 { font-size: 1.7rem; line-height: 1.2; }
+.section-head h3 { font-size: 1.35rem; }
+.section-head h4 { font-size: 1.05rem; }
+
+.eyebrow {
+    margin: 0 0 4px;
+    color: var(--primary);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+.version-badge {
+    margin: 0 0 10px;
+    display: inline-flex;
+    align-items: center;
+    padding: 7px 11px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(29, 78, 216, 0.10), rgba(96, 165, 250, 0.16));
+    color: var(--primary-dark);
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+.subtitle,
+.section-head p,
+.helper {
+    margin: 6px 0 0;
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.topbar-actions,
+.hero-head,
+.field-grid,
+.tabs-inline,
+.bottom-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.topbar-actions {
+    margin-top: 16px;
+    flex-wrap: wrap;
+}
+
+.chip,
+.button,
+.nav-item,
+.mini-tab {
+    border: none;
+    border-radius: 999px;
+    font: inherit;
+    cursor: pointer;
+    transition: 180ms ease;
+}
+
+.chip {
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #eef4ff, #e6efff);
+    color: var(--primary-dark);
+    font-weight: 800;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.chip-dark {
+    background: linear-gradient(135deg, #eef2f7, #e3e9f4);
+    color: var(--text);
+}
+
+.hero-card {
+    padding: 20px 18px;
+    margin-bottom: 14px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.96), rgba(245,249,255,0.92));
+}
+
+.quick-actions-card {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.quick-action {
+    border: 1px solid rgba(219, 228, 240, 0.9);
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(242,247,255,0.94));
+    border-radius: 22px;
+    padding: 16px 14px;
+    text-align: right;
+    color: var(--text);
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.75),
+        0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.quick-action strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: .98rem;
+    font-weight: 900;
+}
+
+.quick-action span {
+    color: var(--muted);
+    font-size: .8rem;
+}
+
+.hero-head {
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.hero-copy {
+    display: grid;
+    gap: 8px;
+}
+
+.hero-helper {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.7;
+    font-size: .95rem;
+}
+
+.hero-actions {
+    display: grid;
+    gap: 10px;
+    min-width: 160px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.metric-card {
+    padding: 18px 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,250,255,0.92));
+}
+
+.metric-card span {
+    display: block;
+    color: var(--muted);
+    font-size: .85rem;
+    margin-bottom: 6px;
+}
+
+.metric-card strong {
+    font-size: 1.45rem;
+    font-weight: 900;
+}
+
+.alert-card {
+    margin-top: 14px;
+    padding: 15px 16px;
+    color: var(--warning);
+    background: #fff8eb;
+    border-color: #fde2b2;
+    font-weight: 700;
+}
+
+.section-head {
+    margin-bottom: 10px;
+}
+
+.progress-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.progress-card {
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(247,250,255,0.92));
+}
+
+.progress-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.progress-head span,
+.progress-card small {
+    color: var(--muted);
+}
+
+.progress-head strong {
+    font-size: .95rem;
+    font-weight: 900;
+}
+
+.progress-track {
+    height: 10px;
+    border-radius: 999px;
+    background: #e9eef6;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    height: 100%;
+    width: 0;
+    border-radius: inherit;
+    transition: width 220ms ease;
+}
+
+.progress-bar.danger {
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.progress-bar.success {
+    background: linear-gradient(90deg, #34d399, #10b981);
+}
+
+.panel { display: none; }
+.panel.is-active { display: grid; }
+
+.card-form,
+.list-card,
+.privacy-card {
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,251,255,0.94));
+}
+
+.field {
+    display: grid;
+    gap: 6px;
+}
+
+.field span {
+    color: var(--text);
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.input {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+    border-radius: 15px;
+    border: 1px solid var(--line);
+    background: rgba(255,255,255,0.94);
+    color: var(--text);
+    font: inherit;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
+}
+
+.input.center { text-align: center; }
+.input.search-input {
+    min-height: 44px;
+    padding-inline: 16px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,249,255,0.96));
+}
+
+.field-grid {
+    flex-direction: row;
+}
+
+.field-grid > .field {
+    flex: 1 1 0;
+}
+
+.button {
+    min-height: 48px;
+    padding: 12px 18px;
+    font-weight: 900;
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
+}
+
+.button-primary {
+    background: linear-gradient(135deg, var(--primary), #3b82f6);
+    color: #fff;
+}
+
+.button-danger {
+    background: linear-gradient(135deg, #d92d20, #ef4444);
+    color: #fff;
+}
+
+.button-warning {
+    background: linear-gradient(135deg, #b45309, #f59e0b);
+    color: #fff;
+}
+
+.button-outline {
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--text);
+}
+
+.button-ghost {
+    background: linear-gradient(135deg, #eef4ff, #e6efff);
+    color: var(--primary-dark);
+}
+
+.button:hover,
+.chip:hover,
+.nav-item:hover,
+.mini-tab:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 420px) {
+    .hero-head {
+        display: grid;
+        gap: 14px;
+    }
+
+    .hero-actions {
+        width: 100%;
+    }
+}
+
+.tabs-inline {
+    margin-bottom: 8px;
+}
+
+.compact-tabs {
+    margin-bottom: 12px;
+}
+
+.mini-tab {
+    min-height: 40px;
+    padding: 0 18px;
+    background: #edf2fa;
+    color: #334155;
+    font-weight: 800;
+}
+
+.mini-tab.is-active {
+    background: var(--primary);
+    color: #fff;
+}
+
+.money-form { display: none; }
+.money-form.is-active { display: grid; gap: 12px; }
+
+.list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.list-item:last-child { border-bottom: none; }
+
+.list-title {
+    font-weight: 800;
+    margin-bottom: 4px;
+}
+
+.list-meta {
+    color: var(--muted);
+    font-size: .84rem;
+    line-height: 1.6;
+}
+
+.list-value {
+    text-align: left;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.list-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-button {
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    border: none;
+    font: inherit;
+    font-size: .78rem;
+    font-weight: 900;
+    cursor: pointer;
+}
+
+.inline-button.success {
+    background: #ecfdf3;
+    color: var(--success);
+}
+
+.inline-button.danger {
+    background: #fff1f2;
+    color: var(--danger);
+}
+
+.tone-income { color: var(--success); }
+.tone-expense { color: var(--danger); }
+.tone-debt { color: #7c3aed; }
+.tone-warning { color: var(--warning); }
+
+.empty-state {
+    padding: 12px 0;
+    color: var(--muted);
+    text-align: center;
+}
+
+.summary-inline {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.toolbar-inline {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.toggle-row label {
+    color: var(--muted);
+    font-size: .88rem;
+    font-weight: 700;
+}
+
+.people-card {
+    margin-bottom: 12px;
+}
+
+.people-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.person-card {
+    padding: 14px;
+    border-radius: 18px;
+    border: 1px solid #e5ebf4;
+    background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,249,255,0.94));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.person-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.person-name {
+    font-weight: 900;
+    font-size: 1rem;
+}
+
+.person-meta {
+    color: var(--muted);
+    font-size: .82rem;
+    line-height: 1.6;
+}
+
+.person-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.person-actions .inline-button {
+    flex: 1 1 0;
+}
+
+.inline-button.neutral {
+    background: #eef4ff;
+    color: var(--primary-dark);
+}
+
+.schedule-form {
+    margin-top: 12px;
+}
+
+.schedule-form-anchor {
+    scroll-margin-top: 18px;
+}
+
+.summary-pill {
+    min-height: 44px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: linear-gradient(180deg, rgba(248,251,255,0.98), rgba(241,247,255,0.96));
+    border: 1px solid #e3eaf3;
+    border-radius: 16px;
+    color: var(--text);
+    font-size: .85rem;
+}
+
+.bottom-nav {
+    position: fixed;
+    right: 12px;
+    left: 12px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.90);
+    border: 1px solid rgba(219, 228, 240, 0.95);
+    border-radius: 30px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    justify-content: space-between;
+    z-index: 30;
+}
+
+.nav-item {
+    flex: 1 1 0;
+    min-height: 48px;
+    background: transparent;
+    color: #475569;
+    font-weight: 800;
+    border-radius: 18px;
+}
+
+.nav-item.is-active {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    color: var(--primary-dark);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.75);
+}
+
+.privacy-screen {
+    min-height: calc(100vh - 32px);
+    display: grid;
+    place-items: center;
+}
+
+.privacy-card {
+    text-align: center;
+}
+
+.privacy-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 36px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: var(--primary-dark);
+    font-weight: 900;
+}
+
+.toast {
+    position: fixed;
+    inset-inline: 20px;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+    padding: 13px 16px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.92);
+    color: #fff;
+    text-align: center;
+    box-shadow: var(--shadow);
+    z-index: 40;
+}
+
+@media (max-width: 420px) {
+    .app-shell {
+        padding-inline: 12px;
+    }
+
+    .field-grid,
+    .hero-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quick-actions-card {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+    </style>
+</head>
+<body>
+<div class="app-shell" id="appShell">
+        <div class="privacy-screen" id="privacyScreen" hidden>
+            <div class="privacy-card">
+                <span class="privacy-badge">الوضع الآمن</span>
+                <h1>حساباتي</h1>
+                <p>أدخل رمز هذا الجهاز للمتابعة.</p>
+                <form id="unlockForm" class="stack">
+                    <input id="unlockCode" class="input center" type="password" inputmode="numeric" maxlength="12" placeholder="رمز القفل" />
+                    <button class="button button-primary" type="submit">فتح التطبيق</button>
+                    <p class="helper error" id="unlockError"></p>
+                </form>
+            </div>
+        </div>
+
+        <main class="app-main" id="appMain">
+            <header class="topbar">
+                <div>
+                    <p class="eyebrow">نسخة آيفون أولية</p>
+                    <p class="version-badge">الإصدار v14</p>
+                    <h1>حساباتي</h1>
+                    <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
+                </div>
+                <div class="topbar-actions">
+                    <button class="chip" id="safeModeToggle" type="button">وضع آمن</button>
+                    <button class="chip chip-dark" id="hideNumbersToggle" type="button">إخفاء الأرقام</button>
+                </div>
+            </header>
+
+            <section class="hero-card">
+                <div class="hero-head">
+                    <div class="hero-copy">
+                        <p class="eyebrow">ملخص اليوم والشهر</p>
+                        <h2 id="deviceTitle">ابدأ إعداد هذا الجهاز</h2>
+                        <p class="hero-helper" id="setupHelper" hidden>
+                            هذا جهاز جديد. ابدأ من الخطة وحدد الاسم والعملة وسقف الصرف حتى يبدأ التطبيق يحسب لك بشكل صحيح.
+                        </p>
+                    </div>
+                    <div class="hero-actions">
+                        <button
+                            class="button button-primary"
+                            id="startSetupButton"
+                            type="button"
+                            onclick="document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('is-active');});document.querySelector('.panel[data-panel=&quot;plan&quot;]')?.classList.add('is-active');document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('is-active');});document.querySelector('.nav-item[data-panel-target=&quot;plan&quot;]')?.classList.add('is-active');setTimeout(function(){var i=document.getElementById('profileName');if(i){i.focus();i.scrollIntoView({behavior:'smooth',block:'center'});}},80);"
+                        >ابدأ الإعداد الآن</button>
+                        <button class="button button-ghost" id="installHintButton" type="button">أضفه للشاشة الرئيسية</button>
+                    </div>
+                </div>
+                <div class="summary-grid">
+                    <article class="metric-card">
+                        <span>الباقي معك الآن</span>
+                        <strong data-money id="monthBalanceValue">₪ 0.00</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>مصروف اليوم</span>
+                        <strong data-money id="todayExpenseValue">₪ 0.00</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>التزامات قريبة</span>
+                        <strong id="dueSoonValue">0</strong>
+                    </article>
+                    <article class="metric-card">
+                        <span>صافي الديون</span>
+                        <strong data-money id="netDebtValue">₪ 0.00</strong>
+                    </article>
+                </div>
+                <div class="alert-card" id="todayAlert">لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.</div>
+                <p class="helper" id="balanceHelper">هذا هو الرصيد الحالي بعد طرح مصاريف الشهر من دخل الشهر.</p>
+            </section>
+
+            <section class="quick-actions-card">
+                <button class="quick-action" type="button" data-quick-panel="money" data-quick-money-tab="expense">
+                    <strong>+ مصروف</strong>
+                    <span>تسجيل صرف سريع</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="money" data-quick-money-tab="income">
+                    <strong>+ دخل</strong>
+                    <span>راتب أو تحويل</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="debts">
+                    <strong>+ دين</strong>
+                    <span>لشخص أو دفعة</span>
+                </button>
+                <button class="quick-action" type="button" data-quick-panel="plan">
+                    <strong>+ التزام</strong>
+                    <span>قسط أو فاتورة</span>
+                </button>
+            </section>
+
+            <section class="panel is-active" data-panel="home">
+                <div class="section-head">
+                    <h3>الرئيسية</h3>
+                    <p>آخر العمليات، الالتزامات القريبة، ونظرة سريعة على الوضع.</p>
+                </div>
+                <div class="progress-grid">
+                    <article class="progress-card">
+                        <div class="progress-head">
+                            <span>استهلاك سقف المصروف</span>
+                            <strong id="budgetUsagePercent">0%</strong>
+                        </div>
+                        <div class="progress-track"><div class="progress-bar danger" id="budgetUsageBar"></div></div>
+                        <small id="budgetUsageHint">لا يوجد سقف شهري محدد بعد.</small>
+                    </article>
+                    <article class="progress-card">
+                        <div class="progress-head">
+                            <span>التقدم نحو التوفير</span>
+                            <strong id="savingUsagePercent">0%</strong>
+                        </div>
+                        <div class="progress-track"><div class="progress-bar success" id="savingUsageBar"></div></div>
+                        <small id="savingUsageHint">لا يوجد هدف توفير محدد بعد.</small>
+                    </article>
+                </div>
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>آخر العمليات</h4>
+                    </div>
+                    <div id="recentOperations" class="list-stack"></div>
+                </div>
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>الالتزامات القادمة</h4>
+                    </div>
+                    <div id="upcomingCommitments" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="money">
+                <div class="section-head">
+                    <h3>الدخل والمصاريف</h3>
+                    <p>إضافة دخل ومصروف بسرعة مع سجل حديث واضح.</p>
+                </div>
+
+                <div class="tabs-inline">
+                    <button class="mini-tab is-active" data-money-tab="expense" type="button">مصروف</button>
+                    <button class="mini-tab" data-money-tab="income" type="button">دخل</button>
+                </div>
+
+                <form class="card-form money-form is-active" id="expenseForm" data-money-form="expense">
+                    <label class="field">
+                        <span>العنوان</span>
+                        <input id="expenseTitle" class="input" type="text" placeholder="خضار، بنزين، مدرسة..." required />
+                    </label>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="expenseAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="expenseDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>التصنيف</span>
+                            <input id="expenseCategory" class="input" type="text" placeholder="بيت، سيارة، أكل..." />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="expenseNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-danger" type="submit">حفظ المصروف</button>
+                </form>
+
+                <form class="card-form money-form" id="incomeForm" data-money-form="income">
+                    <label class="field">
+                        <span>العنوان</span>
+                        <input id="incomeTitle" class="input" type="text" placeholder="راتب، حوالة، هدية..." required />
+                    </label>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="incomeAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="incomeDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>التصنيف</span>
+                            <input id="incomeCategory" class="input" type="text" placeholder="راتب، إضافي، تحويل..." />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="incomeNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-primary" type="submit">حفظ الدخل</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>سجل العمليات</h4>
+                    </div>
+                    <div class="toolbar-inline">
+                        <input id="moneySearchInput" class="input search-input" type="search" placeholder="ابحث: خبز، راتب، مدارس..." />
+                    </div>
+                    <div class="tabs-inline compact-tabs">
+                        <button class="mini-tab is-active" data-log-filter="all" type="button">الكل</button>
+                        <button class="mini-tab" data-log-filter="expense" type="button">مصروف</button>
+                        <button class="mini-tab" data-log-filter="income" type="button">دخل</button>
+                    </div>
+                    <div id="moneyEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="debts">
+                <div class="section-head">
+                    <h3>الأشخاص والديون</h3>
+                    <p>لكل شخص سجل واضح: إله عليك، إليك عليه، والرصيد النهائي.</p>
+                </div>
+
+                <form class="card-form" id="debtForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الشخص</span>
+                            <input id="debtPerson" class="input" type="text" placeholder="مثال: أحمد" required />
+                        </label>
+                        <label class="field">
+                            <span>نوع الحركة</span>
+                            <select id="debtType" class="input">
+                                <option value="for-me">إلي عليه</option>
+                                <option value="on-me">عليّ إله</option>
+                                <option value="paid-to-me">دفع لي</option>
+                                <option value="paid-by-me">دفعت له</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="debtAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="debtDate" class="input" type="date" required />
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span>ملاحظة</span>
+                        <input id="debtNote" class="input" type="text" placeholder="مثال: دفعة جزئية" />
+                    </label>
+                    <button class="button button-primary" type="submit">حفظ الحركة</button>
+                </form>
+
+                <form class="card-form schedule-form schedule-form-anchor" id="debtPlanForm">
+                    <div class="section-head compact">
+                        <h4>خطة سداد دين</h4>
+                        <p>قسّط الدين على دفعات، وخلي النظام يتابع المواعيد والتأخير والدفع المتأخر.</p>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الشخص</span>
+                            <input id="debtPlanPerson" class="input" type="text" placeholder="مثال: محمد" required />
+                        </label>
+                        <label class="field">
+                            <span>إجمالي الدين</span>
+                            <input id="debtPlanTotal" class="input" type="text" inputmode="decimal" placeholder="1000" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>تاريخ أول دفعة</span>
+                            <input id="debtPlanStartDate" class="input" type="date" required />
+                        </label>
+                        <label class="field">
+                            <span>عدد الدفعات</span>
+                            <input id="debtPlanCount" class="input" type="number" min="1" step="1" placeholder="4" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>نوع التكرار</span>
+                            <select id="debtPlanInterval" class="input">
+                                <option value="monthly">شهري</option>
+                                <option value="weekly">أسبوعي</option>
+                                <option value="daily30">كل 30 يوم</option>
+                            </select>
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="debtPlanNote" class="input" type="text" placeholder="مثال: دين بضاعة أو سلفة" />
+                        </label>
+                    </div>
+                    <button class="button button-warning" type="submit">إنشاء خطة السداد</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>كشف الديون</h4>
+                    </div>
+                    <div class="summary-inline" id="debtSummary"></div>
+                    <div class="people-card">
+                        <div class="toolbar-inline">
+                            <input id="debtSearchInput" class="input search-input" type="search" placeholder="ابحث عن شخص أو ملاحظة..." />
+                            <div class="toggle-row">
+                                <label for="showArchivedPeopleToggle">إظهار الأشخاص المؤرشفين</label>
+                                <input id="showArchivedPeopleToggle" type="checkbox" />
+                            </div>
+                        </div>
+                        <div class="people-grid" id="peopleOverview"></div>
+                    </div>
+                    <div id="debtEntries" class="list-stack"></div>
+                </div>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>دفعات الديون المجدولة</h4>
+                        <p>كل دفعة تظهر بموعدها، وإذا تأخرت أو دُفعت متأخرًا سنوضح ذلك هنا.</p>
+                    </div>
+                    <div id="debtInstallmentEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="plan">
+                <div class="section-head">
+                    <h3>الخطة الشهرية والالتزامات</h3>
+                    <p>سقف الصرف، هدف التوفير، والأقساط التي يجب متابعتها.</p>
+                </div>
+
+                <form class="card-form" id="planForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الجهاز / الحساب</span>
+                            <input id="profileName" class="input" type="text" placeholder="آيفون 16 - حسابي" required />
+                        </label>
+                        <label class="field">
+                            <span>العملة</span>
+                            <input id="profileCurrency" class="input" type="text" value="₪" maxlength="10" />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>سقف المصروف الشهري</span>
+                            <input id="profileBudget" class="input" type="text" inputmode="decimal" placeholder="0.00" />
+                        </label>
+                        <label class="field">
+                            <span>هدف التوفير</span>
+                            <input id="profileSavingGoal" class="input" type="text" inputmode="decimal" placeholder="0.00" />
+                        </label>
+                    </div>
+                    <label class="field">
+                        <span>رمز قفل اختياري</span>
+                        <input id="profilePasscode" class="input" type="password" inputmode="numeric" maxlength="12" placeholder="1234" />
+                    </label>
+                    <button class="button button-primary" type="submit">حفظ الخطة والإعدادات</button>
+                </form>
+
+                <form class="card-form" id="commitmentForm">
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>اسم الالتزام</span>
+                            <input id="commitmentName" class="input" type="text" placeholder="إيجار، قسط..." required />
+                        </label>
+                        <label class="field">
+                            <span>المبلغ</span>
+                            <input id="commitmentAmount" class="input" type="text" inputmode="decimal" placeholder="0.00" required />
+                        </label>
+                    </div>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>تاريخ الاستحقاق</span>
+                            <input id="commitmentDate" class="input" type="date" required />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظات</span>
+                            <input id="commitmentNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-warning" type="submit">حفظ الالتزام</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>سجل الالتزامات</h4>
+                    </div>
+                    <div id="commitmentEntries" class="list-stack"></div>
+                </div>
+            </section>
+
+            <section class="panel" data-panel="more">
+                <div class="section-head">
+                    <h3>النسخ والخصوصية</h3>
+                    <p>نسخة احتياطية، استرجاع، ومسح آمن لبيانات هذا الجهاز.</p>
+                </div>
+
+                <div class="card-form">
+                    <button class="button button-primary" id="exportBackupButton" type="button">تصدير نسخة JSON</button>
+                    <label class="button button-outline file-button">
+                        استيراد نسخة
+                        <input id="importBackupInput" type="file" accept="application/json" hidden />
+                    </label>
+                    <button class="button button-outline" id="lockDeviceButton" type="button">قفل الجهاز الآن</button>
+                    <button class="button button-danger" id="resetDeviceButton" type="button">تصفير بيانات هذا الجهاز</button>
+                    <p class="helper" id="backupStatus">آخر نسخة: لا يوجد بعد.</p>
+                </div>
+
+                <form class="card-form" id="reminderForm">
+                    <div class="section-head compact">
+                        <h4>ذكّرني بعدين</h4>
+                        <p>تذكير سريع لشخص، قسط، أو أمر تريد مراجعته لاحقًا.</p>
+                    </div>
+                    <label class="field">
+                        <span>عنوان التذكير</span>
+                        <input id="reminderTitle" class="input" type="text" placeholder="مثال: حاسب محمد آخر الأسبوع" required />
+                    </label>
+                    <div class="field-grid">
+                        <label class="field">
+                            <span>التاريخ</span>
+                            <input id="reminderDate" class="input" type="date" required />
+                        </label>
+                        <label class="field">
+                            <span>ملاحظة</span>
+                            <input id="reminderNote" class="input" type="text" placeholder="اختياري" />
+                        </label>
+                    </div>
+                    <button class="button button-primary" type="submit">حفظ التذكير</button>
+                </form>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>التذكيرات القادمة</h4>
+                    </div>
+                    <div id="reminderEntries" class="list-stack"></div>
+                </div>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item is-active" type="button" data-panel-target="home"><span>الرئيسية</span></button>
+            <button class="nav-item" type="button" data-panel-target="money"><span>الحركات</span></button>
+            <button class="nav-item" type="button" data-panel-target="debts"><span>الديون</span></button>
+            <button class="nav-item" type="button" data-panel-target="plan"><span>الخطة</span></button>
+            <button class="nav-item" type="button" data-panel-target="more"><span>المزيد</span></button>
+        </nav>
+
+        <div class="toast" id="toastMessage" hidden></div>
+    </div>
+
+    
+    <script>
+(function () {
+    const STORAGE_KEY = "personalaccounts.iphone.v1";
+    const DEFAULT_STATE = {
+        profile: {
+            deviceName: "",
+            currency: "₪",
+            monthlyBudget: 0,
+            savingGoal: 0,
+            passcode: "",
+            safeMode: false,
+            hideNumbers: false
+        },
+        incomes: [],
+        expenses: [],
+        debts: [],
+        debtPlans: [],
+        commitments: [],
+        reminders: [],
+        archivedPeople: []
+    };
+
+    const state = loadState();
+    const refs = {
+        appMain: document.getElementById("appMain"),
+        privacyScreen: document.getElementById("privacyScreen"),
+        unlockForm: document.getElementById("unlockForm"),
+        unlockCode: document.getElementById("unlockCode"),
+        unlockError: document.getElementById("unlockError"),
+        deviceTitle: document.getElementById("deviceTitle"),
+        monthBalanceValue: document.getElementById("monthBalanceValue"),
+        todayExpenseValue: document.getElementById("todayExpenseValue"),
+        dueSoonValue: document.getElementById("dueSoonValue"),
+        netDebtValue: document.getElementById("netDebtValue"),
+        todayAlert: document.getElementById("todayAlert"),
+        balanceHelper: document.getElementById("balanceHelper"),
+        recentOperations: document.getElementById("recentOperations"),
+        upcomingCommitments: document.getElementById("upcomingCommitments"),
+        moneyEntries: document.getElementById("moneyEntries"),
+        moneySearchInput: document.getElementById("moneySearchInput"),
+        debtEntries: document.getElementById("debtEntries"),
+        debtInstallmentEntries: document.getElementById("debtInstallmentEntries"),
+        debtSummary: document.getElementById("debtSummary"),
+        debtPlanForm: document.getElementById("debtPlanForm"),
+        debtSearchInput: document.getElementById("debtSearchInput"),
+        showArchivedPeopleToggle: document.getElementById("showArchivedPeopleToggle"),
+        peopleOverview: document.getElementById("peopleOverview"),
+        commitmentEntries: document.getElementById("commitmentEntries"),
+        reminderEntries: document.getElementById("reminderEntries"),
+        setupHelper: document.getElementById("setupHelper"),
+        toast: document.getElementById("toastMessage"),
+        backupStatus: document.getElementById("backupStatus"),
+        safeModeToggle: document.getElementById("safeModeToggle"),
+        hideNumbersToggle: document.getElementById("hideNumbersToggle"),
+        budgetUsagePercent: document.getElementById("budgetUsagePercent"),
+        budgetUsageBar: document.getElementById("budgetUsageBar"),
+        budgetUsageHint: document.getElementById("budgetUsageHint"),
+        savingUsagePercent: document.getElementById("savingUsagePercent"),
+        savingUsageBar: document.getElementById("savingUsageBar"),
+        savingUsageHint: document.getElementById("savingUsageHint"),
+        startSetupButton: document.getElementById("startSetupButton")
+    };
+    let currentLogFilter = "all";
+    let currentMoneySearch = "";
+    let currentDebtSearch = "";
+    let showArchivedPeople = false;
+    let unlocked = !state.profile.passcode || !state.profile.safeMode;
+    let toastTimer = 0;
+
+    function bind() {
+        document.querySelectorAll("[data-panel-target]").forEach((button) => {
+            button.addEventListener("click", () => switchPanel(button.getAttribute("data-panel-target")));
+        });
+
+        document.querySelectorAll("[data-money-tab]").forEach((button) => {
+            button.addEventListener("click", () => switchMoneyTab(button.getAttribute("data-money-tab")));
+        });
+
+        document.querySelectorAll("[data-log-filter]").forEach((button) => {
+            button.addEventListener("click", () => switchLogFilter(button.getAttribute("data-log-filter")));
+        });
+
+        document.querySelectorAll("[data-quick-panel]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const panel = button.getAttribute("data-quick-panel");
+                switchPanel(panel);
+                const moneyTab = button.getAttribute("data-quick-money-tab");
+                if (moneyTab) {
+                    switchMoneyTab(moneyTab);
+                }
+            });
+        });
+
+        document.getElementById("expenseForm").addEventListener("submit", onExpenseSubmit);
+        document.getElementById("incomeForm").addEventListener("submit", onIncomeSubmit);
+        document.getElementById("debtForm").addEventListener("submit", onDebtSubmit);
+        document.getElementById("debtPlanForm").addEventListener("submit", onDebtPlanSubmit);
+        document.getElementById("commitmentForm").addEventListener("submit", onCommitmentSubmit);
+        document.getElementById("planForm").addEventListener("submit", onPlanSubmit);
+        document.getElementById("reminderForm").addEventListener("submit", onReminderSubmit);
+        document.getElementById("exportBackupButton").addEventListener("click", exportBackup);
+        document.getElementById("importBackupInput").addEventListener("change", importBackup);
+        document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
+        document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
+        document.getElementById("installHintButton").addEventListener("click", showInstallHint);
+        refs.startSetupButton.addEventListener("click", startSetup);
+        refs.safeModeToggle.addEventListener("click", toggleSafeMode);
+        refs.hideNumbersToggle.addEventListener("click", toggleHideNumbers);
+        refs.unlockForm.addEventListener("submit", unlock);
+        refs.moneySearchInput.addEventListener("input", () => {
+            currentMoneySearch = refs.moneySearchInput.value.trim().toLowerCase();
+            render();
+        });
+        refs.debtSearchInput.addEventListener("input", () => {
+            currentDebtSearch = refs.debtSearchInput.value.trim().toLowerCase();
+            render();
+        });
+        refs.showArchivedPeopleToggle.addEventListener("change", () => {
+            showArchivedPeople = refs.showArchivedPeopleToggle.checked;
+            render();
+        });
+    }
+
+    function seedDates() {
+        const today = dateValue(new Date());
+        ["expenseDate", "incomeDate", "debtDate", "commitmentDate", "debtPlanStartDate"].forEach((id) => {
+            const element = document.getElementById(id);
+            if (element && !element.value) element.value = today;
+        });
+        const reminderDate = document.getElementById("reminderDate");
+        if (reminderDate && !reminderDate.value) reminderDate.value = today;
+    }
+
+    function onExpenseSubmit(event) {
+        event.preventDefault();
+        state.expenses.unshift({
+            id: crypto.randomUUID(),
+            title: value("expenseTitle"),
+            amount: amount("expenseAmount"),
+            date: value("expenseDate"),
+            category: value("expenseCategory"),
+            note: value("expenseNote"),
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم حفظ المصروف.");
+        render();
+    }
+
+    function onIncomeSubmit(event) {
+        event.preventDefault();
+        state.incomes.unshift({
+            id: crypto.randomUUID(),
+            title: value("incomeTitle"),
+            amount: amount("incomeAmount"),
+            date: value("incomeDate"),
+            category: value("incomeCategory"),
+            note: value("incomeNote"),
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم حفظ الدخل.");
+        render();
+    }
+
+    function onDebtSubmit(event) {
+        event.preventDefault();
+        state.debts.unshift({
+            id: crypto.randomUUID(),
+            person: value("debtPerson"),
+            type: value("debtType"),
+            amount: amount("debtAmount"),
+            date: value("debtDate"),
+            note: value("debtNote"),
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم حفظ حركة الدين.");
+        render();
+    }
+
+    function onCommitmentSubmit(event) {
+        event.preventDefault();
+        state.commitments.unshift({
+            id: crypto.randomUUID(),
+            name: value("commitmentName"),
+            amount: amount("commitmentAmount"),
+            dueDate: value("commitmentDate"),
+            note: value("commitmentNote"),
+            isPaid: false,
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم حفظ الالتزام.");
+        render();
+    }
+
+    function onDebtPlanSubmit(event) {
+        event.preventDefault();
+        const person = value("debtPlanPerson");
+        const total = amount("debtPlanTotal");
+        const count = Math.max(1, Math.round(Number(document.getElementById("debtPlanCount").value || 1)));
+        const startDate = value("debtPlanStartDate");
+        const interval = value("debtPlanInterval") || "monthly";
+        const note = value("debtPlanNote");
+
+        const installments = buildInstallments(total, count, startDate).map((item, index) => ({
+            id: crypto.randomUUID(),
+            sequence: index + 1,
+            amount: item.amount,
+            dueDate: shiftDateByInterval(startDate, interval, index),
+            isPaid: false,
+            paidAt: "",
+            note
+        }));
+
+        state.debtPlans.unshift({
+            id: crypto.randomUUID(),
+            person,
+            totalAmount: total,
+            installmentCount: count,
+            interval,
+            startDate,
+            note,
+            installments,
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم إنشاء خطة السداد.");
+        render();
+    }
+
+    function onPlanSubmit(event) {
+        event.preventDefault();
+        state.profile.deviceName = value("profileName");
+        state.profile.currency = value("profileCurrency") || "₪";
+        state.profile.monthlyBudget = amount("profileBudget");
+        state.profile.savingGoal = amount("profileSavingGoal");
+        state.profile.passcode = value("profilePasscode");
+        saveState();
+        unlocked = !state.profile.passcode || !state.profile.safeMode || unlocked;
+        toast("تم حفظ الخطة وإعدادات الجهاز.");
+        render();
+        switchPanel("home");
+    }
+
+    function onReminderSubmit(event) {
+        event.preventDefault();
+        state.reminders.unshift({
+            id: crypto.randomUUID(),
+            title: value("reminderTitle"),
+            date: value("reminderDate"),
+            note: value("reminderNote"),
+            isDone: false,
+            createdAt: new Date().toISOString()
+        });
+        saveState();
+        event.target.reset();
+        seedDates();
+        toast("تم حفظ التذكير.");
+        render();
+    }
+
+    function switchPanel(panel) {
+        document.querySelectorAll(".panel").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-panel") === panel));
+        document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-panel-target") === panel));
+        const targetPanel = document.querySelector(`.panel[data-panel="${panel}"]`);
+        if (targetPanel) {
+            targetPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        } else {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }
+
+    function switchMoneyTab(tab) {
+        document.querySelectorAll(".mini-tab").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-money-tab") === tab));
+        document.querySelectorAll(".money-form").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-money-form") === tab));
+    }
+
+    function switchLogFilter(filter) {
+        currentLogFilter = filter;
+        document.querySelectorAll("[data-log-filter]").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-log-filter") === filter));
+        render();
+    }
+
+    function unlock(event) {
+        event.preventDefault();
+        if (value("unlockCode") === state.profile.passcode) {
+            unlocked = true;
+            refs.unlockError.textContent = "";
+            refs.unlockCode.value = "";
+            render();
+            return;
+        }
+        refs.unlockError.textContent = "رمز القفل غير صحيح.";
+    }
+
+    function toggleSafeMode() {
+        state.profile.safeMode = !state.profile.safeMode;
+        saveState();
+        if (state.profile.safeMode && state.profile.passcode) {
+            unlocked = false;
+        }
+        render();
+        toast(state.profile.safeMode ? "تم تفعيل الوضع الآمن." : "تم إيقاف الوضع الآمن.");
+    }
+
+    function toggleHideNumbers() {
+        state.profile.hideNumbers = !state.profile.hideNumbers;
+        saveState();
+        render();
+    }
+
+    function lockNow() {
+        if (!state.profile.passcode) {
+            toast("أضف رمز قفل أولًا من قسم الخطة.");
+            return;
+        }
+        unlocked = false;
+        render();
+    }
+
+    function showInstallHint() {
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v12.");
+    }
+
+    function startSetup() {
+        switchPanel("plan");
+        toast("افتح الاسم والعملة وسقف المصروف من هنا.");
+        window.setTimeout(() => {
+            const nameInput = document.getElementById("profileName");
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }, 260);
+    }
+
+    function exportBackup() {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "personalaccounts-iphone-backup.json";
+        link.click();
+        URL.revokeObjectURL(url);
+        refs.backupStatus.textContent = "آخر نسخة: تم التصدير الآن.";
+        toast("تم تصدير نسخة JSON.");
+    }
+
+    function importBackup(event) {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function () {
+            try {
+                const data = JSON.parse(String(reader.result || "{}"));
+                Object.assign(state, normalizeState(data));
+                saveState();
+                unlocked = !state.profile.passcode || !state.profile.safeMode;
+                toast("تم استيراد النسخة.");
+                render();
+            } catch {
+                toast("تعذر قراءة النسخة.");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = "";
+    }
+
+    function resetDevice() {
+        if (!window.confirm("سيتم حذف كل بيانات هذا الجهاز المحلي. هل تريد المتابعة؟")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        Object.assign(state, normalizeState(DEFAULT_STATE));
+        unlocked = true;
+        seedDates();
+        render();
+        toast("تم تصفير بيانات هذا الجهاز.");
+    }
+
+    function render() {
+        const hidden = !!state.profile.hideNumbers;
+        const isConfigured = !!state.profile.deviceName;
+        const hasEntries = !!(state.incomes.length || state.expenses.length || state.debts.length || state.commitments.length);
+        const needsSetup = !isConfigured && !hasEntries;
+
+        refs.deviceTitle.textContent = state.profile.deviceName || "ابدأ إعداد هذا الجهاز";
+        refs.setupHelper.hidden = !needsSetup;
+        refs.startSetupButton.hidden = !needsSetup;
+        setValue("profileName", state.profile.deviceName);
+        setValue("profileCurrency", state.profile.currency || "₪");
+        setValue("profileBudget", state.profile.monthlyBudget || "");
+        setValue("profileSavingGoal", state.profile.savingGoal || "");
+        setValue("profilePasscode", state.profile.passcode || "");
+        refs.safeModeToggle.textContent = state.profile.safeMode ? "إيقاف الوضع الآمن" : "وضع آمن";
+        refs.hideNumbersToggle.textContent = hidden ? "إظهار الأرقام" : "إخفاء الأرقام";
+        refs.showArchivedPeopleToggle.checked = showArchivedPeople;
+        refs.appMain.hidden = state.profile.safeMode && !!state.profile.passcode && !unlocked;
+        refs.privacyScreen.hidden = !state.profile.safeMode || !state.profile.passcode || unlocked;
+
+        const currency = state.profile.currency || "₪";
+        const incomesMonth = monthItems(state.incomes);
+        const expensesMonth = monthItems(state.expenses);
+        const monthIncome = sum(incomesMonth, "amount");
+        const monthExpense = sum(expensesMonth, "amount");
+        const monthBalance = monthIncome - monthExpense;
+        const todayExpense = state.expenses.filter((x) => x.date === dateValue(new Date())).reduce((a, b) => a + Number(b.amount || 0), 0);
+        const netDebt = state.debts.reduce((total, item) => {
+            if (item.type === "for-me") return total + item.amount;
+            if (item.type === "on-me") return total - item.amount;
+            if (item.type === "paid-to-me") return total - item.amount;
+            return total + item.amount;
+        }, 0);
+        const dueSoonCommitments = state.commitments.filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
+        const dueSoonDebtInstallments = flattenDebtInstallments()
+            .filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
+        const dueSoon = dueSoonCommitments.concat(dueSoonDebtInstallments);
+        const budgetUsage = state.profile.monthlyBudget > 0 ? Math.min(100, Math.round((monthExpense / state.profile.monthlyBudget) * 100)) : 0;
+        const savingCurrent = monthIncome - monthExpense;
+        const savingUsage = state.profile.savingGoal > 0 ? Math.max(0, Math.min(100, Math.round((savingCurrent / state.profile.savingGoal) * 100))) : 0;
+
+        money(refs.monthBalanceValue, monthBalance, currency, hidden);
+        money(refs.todayExpenseValue, todayExpense, currency, hidden);
+        money(refs.netDebtValue, netDebt, currency, hidden);
+        refs.dueSoonValue.textContent = dueSoon.length;
+        refs.budgetUsagePercent.textContent = `${budgetUsage}%`;
+        refs.budgetUsageBar.style.width = `${budgetUsage}%`;
+        refs.budgetUsageHint.textContent = state.profile.monthlyBudget > 0
+            ? `${hidden ? "••••" : formatMoney(monthExpense, currency)} من أصل ${hidden ? "••••" : formatMoney(state.profile.monthlyBudget, currency)}`
+            : "لا يوجد سقف شهري محدد بعد.";
+        refs.savingUsagePercent.textContent = `${savingUsage}%`;
+        refs.savingUsageBar.style.width = `${savingUsage}%`;
+        refs.savingUsageHint.textContent = state.profile.savingGoal > 0
+            ? `${hidden ? "••••" : formatMoney(savingCurrent, currency)} من أصل ${hidden ? "••••" : formatMoney(state.profile.savingGoal, currency)}`
+            : "لا يوجد هدف توفير محدد بعد.";
+        refs.balanceHelper.textContent = hidden
+            ? "المتبقي الحالي مخفي الآن."
+            : `دخل هذا الشهر ${formatMoney(monthIncome, currency)} - مصروف هذا الشهر ${formatMoney(monthExpense, currency)} = الباقي معك الآن ${formatMoney(monthBalance, currency)}.`;
+
+        refs.todayAlert.textContent = needsSetup
+            ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
+            : dueSoon.length
+                ? `عندك ${dueSoon.length} استحقاق قريب خلال 3 أيام.`
+                : state.profile.monthlyBudget > 0 && monthExpense > state.profile.monthlyBudget
+                    ? "تنبيه: تجاوزت سقف المصروف الشهري."
+                    : "لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.";
+
+        renderOperations(currency, hidden);
+        renderDebts(currency, hidden);
+        renderCommitments(currency, hidden);
+        renderReminders();
+    }
+
+    function renderOperations(currency, hidden) {
+        const recent = state.expenses.map((x) => ({ kind: "expense", ...x }))
+            .concat(state.incomes.map((x) => ({ kind: "income", ...x })))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 8);
+
+        refs.recentOperations.innerHTML = recent.length
+            ? recent.map((item) => listItemMarkup(
+                item.title,
+                `${item.kind === "expense" ? "مصروف" : "دخل"} · ${displayDate(item.date)}${item.category ? ` · ${item.category}` : ""}`,
+                hidden ? "••••" : formatMoney(item.amount, currency),
+                item.kind === "expense" ? "tone-expense" : "tone-income"
+            )).join("")
+            : emptyState("لا توجد عمليات بعد.");
+
+        let moneyLog = state.expenses.map((x) => ({ kind: "expense", ...x }))
+            .concat(state.incomes.map((x) => ({ kind: "income", ...x })))
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        if (currentLogFilter !== "all") {
+            moneyLog = moneyLog.filter((item) => item.kind === currentLogFilter);
+        }
+        if (currentMoneySearch) {
+            moneyLog = moneyLog.filter((item) =>
+                [item.title, item.category, item.note]
+                    .filter(Boolean)
+                    .some((part) => String(part).toLowerCase().includes(currentMoneySearch))
+            );
+        }
+
+        refs.moneyEntries.innerHTML = moneyLog.length
+            ? moneyLog.map((item) => listItemMarkup(
+                item.title,
+                `${item.kind === "expense" ? "مصروف" : "دخل"} · ${displayDate(item.date)}${item.category ? ` · ${item.category}` : ""}`,
+                hidden ? "••••" : formatMoney(item.amount, currency),
+                item.kind === "expense" ? "tone-expense" : "tone-income"
+            )).join("")
+            : emptyState("لا توجد عمليات محفوظة.");
+    }
+
+    function renderDebts(currency, hidden) {
+        const forMe = state.debts.filter((x) => x.type === "for-me").reduce((a, b) => a + Number(b.amount || 0), 0);
+        const onMe = state.debts.filter((x) => x.type === "on-me").reduce((a, b) => a + Number(b.amount || 0), 0);
+        refs.debtSummary.innerHTML = [
+            summaryPill("إلك على الناس", hidden ? "••••" : formatMoney(forMe, currency)),
+            summaryPill("عليك للناس", hidden ? "••••" : formatMoney(onMe, currency)),
+            summaryPill("صافي الديون", hidden ? "••••" : formatMoney(forMe - onMe, currency))
+        ].join("");
+
+        const peopleRows = buildPeopleOverview(currency, hidden);
+        const visiblePeople = peopleRows
+            .filter((person) => showArchivedPeople || !person.archived)
+            .filter((person) => !currentDebtSearch || person.searchText.includes(currentDebtSearch));
+
+        refs.peopleOverview.innerHTML = visiblePeople.length
+            ? visiblePeople.map((person) => personCardMarkup(person, currency, hidden)).join("")
+            : emptyState(showArchivedPeople ? "لا توجد أسماء مطابقة." : "لا توجد أسماء نشطة مطابقة.");
+
+        refs.peopleOverview.querySelectorAll("[data-archive-person]").forEach((button) => {
+            button.addEventListener("click", () => toggleArchivePerson(button.getAttribute("data-archive-person")));
+        });
+        refs.peopleOverview.querySelectorAll("[data-restore-person]").forEach((button) => {
+            button.addEventListener("click", () => toggleArchivePerson(button.getAttribute("data-restore-person")));
+        });
+        refs.peopleOverview.querySelectorAll("[data-schedule-person]").forEach((button) => {
+            button.addEventListener("click", () => prepareDebtSchedule(button.getAttribute("data-schedule-person")));
+        });
+
+        let debtItems = state.debts.slice();
+        if (!showArchivedPeople) {
+            debtItems = debtItems.filter((item) => !state.archivedPeople.includes(item.person));
+        }
+        if (currentDebtSearch) {
+            debtItems = debtItems.filter((item) =>
+                [item.person, item.note, debtTypeLabel(item.type)]
+                    .filter(Boolean)
+                    .some((part) => String(part).toLowerCase().includes(currentDebtSearch))
+            );
+        }
+
+        refs.debtEntries.innerHTML = debtItems.length
+            ? debtItems.map((item) => listItemMarkup(
+                item.person,
+                `${debtTypeLabel(item.type)} · ${displayDate(item.date)}${item.note ? ` · ${item.note}` : ""}`,
+                hidden ? "••••" : formatMoney(item.amount, currency),
+                "tone-debt"
+            )).join("")
+            : emptyState("لا توجد حركات ديون بعد.");
+
+        const installments = flattenDebtInstallments()
+            .filter((item) => showArchivedPeople || !state.archivedPeople.includes(item.person))
+            .filter((item) => !currentDebtSearch || `${item.person} ${item.note || ""}`.toLowerCase().includes(currentDebtSearch))
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        refs.debtInstallmentEntries.innerHTML = installments.length
+            ? installments.map((item) => debtInstallmentItemMarkup(item, currency, hidden)).join("")
+            : emptyState("لا توجد دفعات مجدولة بعد.");
+
+        refs.debtInstallmentEntries.querySelectorAll("[data-pay-installment]").forEach((button) => {
+            button.addEventListener("click", () => {
+                markInstallmentPaid(button.getAttribute("data-pay-installment"));
+            });
+        });
+        refs.debtInstallmentEntries.querySelectorAll("[data-unpay-installment]").forEach((button) => {
+            button.addEventListener("click", () => {
+                toggleInstallmentPaid(button.getAttribute("data-unpay-installment"), false);
+            });
+        });
+    }
+
+    function renderCommitments(currency, hidden) {
+        const upcoming = state.commitments
+            .filter((x) => !x.isPaid)
+            .map((x) => ({ ...x, kind: "commitment" }))
+            .concat(flattenDebtInstallments().filter((x) => !x.isPaid).map((x) => ({ ...x, kind: "debt-installment" })))
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+        refs.upcomingCommitments.innerHTML = upcoming.length
+            ? upcoming.slice(0, 6).map((item) => listItemMarkup(
+                item.kind === "debt-installment" ? `دفعة ${item.person}` : item.name,
+                `${item.kind === "debt-installment" ? `دفعة ${item.sequence}/${item.installmentCount} · ` : ""}${displayDate(item.dueDate)}${item.note ? ` · ${item.note}` : ""}`,
+                hidden ? "••••" : formatMoney(item.amount, currency),
+                installmentTone(item)
+            )).join("")
+            : emptyState("لا توجد التزامات قريبة.");
+
+        refs.commitmentEntries.innerHTML = state.commitments.length
+            ? state.commitments.map((item) => commitmentItemMarkup(item, currency, hidden)).join("")
+            : emptyState("لا توجد التزامات محفوظة.");
+
+        refs.commitmentEntries.querySelectorAll("[data-mark-paid]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const id = button.getAttribute("data-mark-paid");
+                state.commitments = state.commitments.map((item) => item.id === id ? { ...item, isPaid: true } : item);
+                saveState();
+                toast("تم تعليم الالتزام كمدفوع.");
+                render();
+            });
+        });
+        refs.commitmentEntries.querySelectorAll("[data-delete-id]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const id = button.getAttribute("data-delete-id");
+                state.commitments = state.commitments.filter((item) => item.id !== id);
+                saveState();
+                toast("تم حذف الالتزام.");
+                render();
+            });
+        });
+    }
+
+    function renderReminders() {
+        const reminders = state.reminders
+            .slice()
+            .sort((a, b) => Number(a.isDone) - Number(b.isDone) || new Date(a.date) - new Date(b.date));
+
+        refs.reminderEntries.innerHTML = reminders.length
+            ? reminders.map((item) => reminderItemMarkup(item)).join("")
+            : emptyState("لا توجد تذكيرات محفوظة.");
+
+        refs.reminderEntries.querySelectorAll("[data-reminder-done]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const id = button.getAttribute("data-reminder-done");
+                state.reminders = state.reminders.map((item) => item.id === id ? { ...item, isDone: !item.isDone } : item);
+                saveState();
+                render();
+                toast("تم تحديث حالة التذكير.");
+            });
+        });
+
+        refs.reminderEntries.querySelectorAll("[data-reminder-delete]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const id = button.getAttribute("data-reminder-delete");
+                state.reminders = state.reminders.filter((item) => item.id !== id);
+                saveState();
+                render();
+                toast("تم حذف التذكير.");
+            });
+        });
+    }
+
+    function listItemMarkup(title, meta, valueText, tone) {
+        return `<div class="list-item"><div><div class="list-title">${escapeHtml(title)}</div><div class="list-meta">${escapeHtml(meta)}</div></div><div class="list-value ${tone}">${escapeHtml(valueText)}</div></div>`;
+    }
+
+    function debtInstallmentItemMarkup(item, currency, hidden) {
+        return `<div class="list-item">
+            <div>
+                <div class="list-title">${escapeHtml(item.person)} · دفعة ${escapeHtml(String(item.sequence))}/${escapeHtml(String(item.installmentCount))}</div>
+                <div class="list-meta">${escapeHtml(debtInstallmentMeta(item))}</div>
+            </div>
+            <div class="list-actions">
+                <div class="list-value ${installmentTone(item)}">${escapeHtml(hidden ? "••••" : formatMoney(item.amount, currency))}</div>
+                ${!item.isPaid ? `<button class="inline-button success" type="button" data-pay-installment="${escapeHtml(item.installmentId)}">تم الدفع</button>` : `<button class="inline-button neutral" type="button" data-unpay-installment="${escapeHtml(item.installmentId)}">إرجاع</button>`}
+            </div>
+        </div>`;
+    }
+
+    function personCardMarkup(person, currency, hidden) {
+        return `<div class="person-card">
+            <div class="person-head">
+                <div>
+                    <div class="person-name">${escapeHtml(hidden ? "اسم مخفي" : person.name)}</div>
+                    <div class="person-meta">${escapeHtml(person.meta)}</div>
+                </div>
+                <div class="list-value ${person.net >= 0 ? "tone-income" : "tone-expense"}">${escapeHtml(hidden ? "••••" : formatMoney(person.net, currency))}</div>
+            </div>
+            <div class="person-actions">
+                ${person.net < 0 ? `<button class="inline-button success" type="button" data-schedule-person="${escapeHtml(person.name)}">جدولة الدين</button>` : ""}
+                <button class="inline-button neutral" type="button" ${person.archived ? `data-restore-person="${escapeHtml(person.name)}"` : `data-archive-person="${escapeHtml(person.name)}"`}>
+                    ${person.archived ? "استرجاع" : "أرشفة"}
+                </button>
+            </div>
+        </div>`;
+    }
+
+    function reminderItemMarkup(item) {
+        return `<div class="list-item">
+            <div>
+                <div class="list-title">${escapeHtml(item.title)}</div>
+                <div class="list-meta">${escapeHtml(displayDate(item.date))}${item.note ? ` · ${escapeHtml(item.note)}` : ""}${item.isDone ? " · تم" : " · بانتظار"}</div>
+            </div>
+            <div class="list-actions">
+                <button class="inline-button success" type="button" data-reminder-done="${escapeHtml(item.id)}">${item.isDone ? "إرجاع" : "تم"}</button>
+                <button class="inline-button danger" type="button" data-reminder-delete="${escapeHtml(item.id)}">حذف</button>
+            </div>
+        </div>`;
+    }
+
+    function flattenDebtInstallments() {
+        return state.debtPlans.flatMap((plan) =>
+            (plan.installments || []).map((installment) => ({
+                planId: plan.id,
+                person: plan.person,
+                installmentId: installment.id,
+                amount: Number(installment.amount || 0),
+                dueDate: installment.dueDate,
+                isPaid: !!installment.isPaid,
+                paidAt: installment.paidAt || "",
+                sequence: installment.sequence,
+                installmentCount: plan.installmentCount,
+                note: installment.note || plan.note || ""
+            }))
+        );
+    }
+
+    function buildInstallments(total, count, startDate) {
+        const cents = Math.round(Number(total || 0) * 100);
+        const base = Math.floor(cents / count);
+        const remainder = cents - (base * count);
+        return Array.from({ length: count }, (_, index) => ({
+            amount: (base + (index === count - 1 ? remainder : 0)) / 100
+        }));
+    }
+
+    function shiftDateByInterval(startDate, interval, index) {
+        const date = new Date(startDate);
+        if (interval === "weekly") {
+            date.setDate(date.getDate() + (index * 7));
+        } else if (interval === "daily30") {
+            date.setDate(date.getDate() + (index * 30));
+        } else {
+            date.setMonth(date.getMonth() + index);
+        }
+        return dateValue(date);
+    }
+
+    function markInstallmentPaid(installmentId) {
+        toggleInstallmentPaid(installmentId, true);
+    }
+
+    function toggleInstallmentPaid(installmentId, nextPaidState) {
+        state.debtPlans = state.debtPlans.map((plan) => ({
+            ...plan,
+            installments: (plan.installments || []).map((item) =>
+                item.id === installmentId
+                    ? { ...item, isPaid: nextPaidState, paidAt: nextPaidState ? dateValue(new Date()) : "" }
+                    : item
+            )
+        }));
+        saveState();
+        render();
+        toast(nextPaidState ? "تم حفظ الدفعة." : "تمت إعادة الدفعة إلى بانتظار.");
+    }
+
+    function debtInstallmentMeta(item) {
+        const due = displayDate(item.dueDate);
+        if (item.isPaid) {
+            if (item.paidAt && item.paidAt !== item.dueDate) {
+                const isLate = new Date(item.paidAt) > new Date(item.dueDate);
+                return `${due} · ${isLate ? "مدفوعة متأخرة" : "مدفوعة"} ${item.paidAt ? `· بتاريخ ${displayDate(item.paidAt)}` : ""}${item.note ? ` · ${item.note}` : ""}`;
+            }
+            return `${due} · مدفوعة${item.note ? ` · ${item.note}` : ""}`;
+        }
+        const days = daysUntil(item.dueDate);
+        if (days < 0) {
+            return `${due} · متأخرة منذ ${Math.abs(days)} يوم${item.note ? ` · ${item.note}` : ""}`;
+        }
+        return `${due} · بانتظار${item.note ? ` · ${item.note}` : ""}`;
+    }
+
+    function installmentTone(item) {
+        if (item.isPaid) {
+            return item.paidAt && new Date(item.paidAt) > new Date(item.dueDate) ? "tone-warning" : "tone-income";
+        }
+        return daysUntil(item.dueDate) < 0 ? "tone-expense" : "tone-warning";
+    }
+
+    function buildPeopleOverview(currency, hidden) {
+        const grouped = new Map();
+        state.debts.forEach((item) => {
+            const key = String(item.person || "").trim();
+            if (!key) return;
+            if (!grouped.has(key)) grouped.set(key, []);
+            grouped.get(key).push(item);
+        });
+        return Array.from(grouped.entries()).map(([name, items]) => {
+            const net = items.reduce((total, item) => {
+                if (item.type === "for-me") return total + Number(item.amount || 0);
+                if (item.type === "on-me") return total - Number(item.amount || 0);
+                if (item.type === "paid-to-me") return total - Number(item.amount || 0);
+                return total + Number(item.amount || 0);
+            }, 0);
+            const archived = state.archivedPeople.includes(name);
+            return {
+                name,
+                net,
+                archived,
+                meta: `${items.length} حركة${archived ? " · مؤرشف" : ""}`,
+                searchText: `${name} ${items.map((x) => `${x.note || ""} ${debtTypeLabel(x.type)}`).join(" ")}`.toLowerCase()
+            };
+        }).sort((a, b) => a.name.localeCompare(b.name, "ar"));
+    }
+
+    function toggleArchivePerson(name) {
+        if (!name) return;
+        const archived = state.archivedPeople.includes(name);
+        state.archivedPeople = archived
+            ? state.archivedPeople.filter((item) => item !== name)
+            : state.archivedPeople.concat(name);
+        saveState();
+        render();
+        toast(archived ? "تم استرجاع الشخص." : "تمت أرشفة الشخص.");
+    }
+
+    function prepareDebtSchedule(name) {
+        if (!name) return;
+        const personRows = buildPeopleOverview();
+        const person = personRows.find((item) => item.name === name);
+        if (!person) {
+            toast("تعذر العثور على رصيد هذا الشخص.");
+            return;
+        }
+        if (person.net >= 0) {
+            toast("هذا الشخص لا يظهر عليك رصيدًا يحتاج إلى جدولة.");
+            return;
+        }
+
+        setValue("debtPlanPerson", person.name);
+        setValue("debtPlanTotal", Math.abs(person.net).toFixed(2));
+        if (!value("debtPlanCount")) setValue("debtPlanCount", "4");
+        if (!value("debtPlanStartDate")) setValue("debtPlanStartDate", dateValue(new Date()));
+        switchPanel("debts");
+        window.setTimeout(() => {
+            refs.debtPlanForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+            const target = document.getElementById("debtPlanCount");
+            if (target) target.focus();
+        }, 120);
+        toast(`تم تجهيز خطة سداد لـ ${name}.`);
+    }
+
+    function commitmentItemMarkup(item, currency, hidden) {
+        return `<div class="list-item">
+            <div>
+                <div class="list-title">${escapeHtml(item.name)}</div>
+                <div class="list-meta">${escapeHtml(item.isPaid ? "مدفوع" : "غير مدفوع")} · ${escapeHtml(displayDate(item.dueDate))}${item.note ? ` · ${escapeHtml(item.note)}` : ""}</div>
+            </div>
+            <div class="list-actions">
+                <div class="list-value ${item.isPaid ? "tone-income" : "tone-warning"}">${escapeHtml(hidden ? "••••" : formatMoney(item.amount, currency))}</div>
+                ${!item.isPaid ? `<button class="inline-button success" type="button" data-mark-paid="${escapeHtml(item.id)}">تم الدفع</button>` : ""}
+                <button class="inline-button danger" type="button" data-delete-id="${escapeHtml(item.id)}">حذف</button>
+            </div>
+        </div>`;
+    }
+
+    function summaryPill(label, valueText) {
+        return `<div class="summary-pill"><span>${escapeHtml(label)}</span><strong>${escapeHtml(valueText)}</strong></div>`;
+    }
+
+    function emptyState(message) {
+        return `<div class="empty-state">${escapeHtml(message)}</div>`;
+    }
+
+    function money(element, valueAmount, currency, hidden) {
+        element.textContent = hidden ? "••••" : formatMoney(valueAmount, currency);
+    }
+
+    function monthItems(items) {
+        const now = new Date();
+        return items.filter((item) => {
+            const date = new Date(item.date);
+            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        });
+    }
+
+    function sum(items, key) {
+        return items.reduce((total, item) => total + Number(item[key] || 0), 0);
+    }
+
+    function debtTypeLabel(type) {
+        return {
+            "for-me": "إلي عليه",
+            "on-me": "عليّ إله",
+            "paid-to-me": "دفع لي",
+            "paid-by-me": "دفعت له"
+        }[type] || "حركة";
+    }
+
+    function daysUntil(dateString) {
+        const date = new Date(dateString);
+        const today = new Date();
+        date.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        return Math.round((date - today) / 86400000);
+    }
+
+    function formatMoney(numberValue, currency) {
+        return `${currency} ${new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(numberValue || 0))}`;
+    }
+
+    function displayDate(valueText) {
+        if (!valueText) return "بدون تاريخ";
+        return new Intl.DateTimeFormat("ar", { year: "numeric", month: "short", day: "numeric" }).format(new Date(valueText));
+    }
+
+    function value(id) { return String(document.getElementById(id).value || "").trim(); }
+    function amount(id) {
+        const parsed = Number(document.getElementById(id).value || 0);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+    function setValue(id, nextValue) {
+        const el = document.getElementById(id);
+        if (el) el.value = nextValue;
+    }
+    function dateValue(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+
+    function loadState() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return normalizeState(DEFAULT_STATE);
+            return normalizeState(JSON.parse(raw));
+        } catch {
+            return normalizeState(DEFAULT_STATE);
+        }
+    }
+
+    function normalizeState(raw) {
+        const data = raw || {};
+        return {
+            profile: {
+                deviceName: String(data.profile?.deviceName || ""),
+                currency: String(data.profile?.currency || "₪"),
+                monthlyBudget: Number(data.profile?.monthlyBudget || 0),
+                savingGoal: Number(data.profile?.savingGoal || 0),
+                passcode: String(data.profile?.passcode || ""),
+                safeMode: !!data.profile?.safeMode,
+                hideNumbers: !!data.profile?.hideNumbers
+            },
+            incomes: Array.isArray(data.incomes) ? data.incomes : [],
+            expenses: Array.isArray(data.expenses) ? data.expenses : [],
+            debts: Array.isArray(data.debts) ? data.debts : [],
+            debtPlans: Array.isArray(data.debtPlans) ? data.debtPlans : [],
+            commitments: Array.isArray(data.commitments) ? data.commitments : [],
+            reminders: Array.isArray(data.reminders) ? data.reminders : [],
+            archivedPeople: Array.isArray(data.archivedPeople) ? data.archivedPeople : []
+        };
+    }
+
+    function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function toast(message) {
+        refs.toast.hidden = false;
+        refs.toast.textContent = message;
+        clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => { refs.toast.hidden = true; }, 2200);
+    }
+
+    function escapeHtml(valueText) {
+        return String(valueText)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    bind();
+    seedDates();
+    render();
+})();
+
+
+
+    </script>
+</body>
+</html>
+
+
