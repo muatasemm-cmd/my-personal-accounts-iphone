@@ -743,7 +743,12 @@ body {
                         </p>
                     </div>
                     <div class="hero-actions">
-                        <button class="button button-primary" id="startSetupButton" type="button">ابدأ الإعداد الآن</button>
+                        <button
+                            class="button button-primary"
+                            id="startSetupButton"
+                            type="button"
+                            onclick="document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('is-active');});document.querySelector('.panel[data-panel=&quot;plan&quot;]')?.classList.add('is-active');document.querySelectorAll('.nav-item').forEach(function(n){n.classList.remove('is-active');});document.querySelector('.nav-item[data-panel-target=&quot;plan&quot;]')?.classList.add('is-active');setTimeout(function(){var i=document.getElementById('profileName');if(i){i.focus();i.scrollIntoView({behavior:'smooth',block:'center'});}},80);"
+                        >ابدأ الإعداد الآن</button>
                         <button class="button button-ghost" id="installHintButton" type="button">أضفه للشاشة الرئيسية</button>
                     </div>
                 </div>
