@@ -610,15 +610,18 @@ body {
 .save-fab {
     position: fixed;
     right: 16px;
-    left: 16px;
+    left: auto;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 86px);
-    min-height: 54px;
+    min-height: 48px;
+    min-width: 132px;
+    max-width: 168px;
+    padding: 0 18px;
     border: none;
-    border-radius: 20px;
+    border-radius: 999px;
     background: linear-gradient(135deg, #1d4ed8, #2563eb);
     color: #ffffff;
     font: inherit;
-    font-size: 1rem;
+    font-size: .95rem;
     font-weight: 900;
     letter-spacing: -0.01em;
     box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
@@ -699,6 +702,12 @@ body {
 
     .quick-actions-card {
         grid-template-columns: 1fr;
+    }
+
+    .save-fab {
+        right: 12px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
+        min-width: 118px;
     }
 }
 
