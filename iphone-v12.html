@@ -607,34 +607,6 @@ body {
     z-index: 30;
 }
 
-.save-fab {
-    position: fixed;
-    right: 16px;
-    left: auto;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 86px);
-    min-height: 48px;
-    min-width: 132px;
-    max-width: 168px;
-    padding: 0 18px;
-    border: none;
-    border-radius: 999px;
-    background: linear-gradient(135deg, #1d4ed8, #2563eb);
-    color: #ffffff;
-    font: inherit;
-    font-size: .95rem;
-    font-weight: 900;
-    letter-spacing: -0.01em;
-    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
-    cursor: pointer;
-    z-index: 29;
-    transition: transform 160ms ease, box-shadow 160ms ease;
-}
-
-.save-fab:active {
-    transform: translateY(1px) scale(0.995);
-    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.24);
-}
-
 .nav-item {
     flex: 1 1 0;
     min-height: 48px;
@@ -704,11 +676,6 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .save-fab {
-        right: 12px;
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 84px);
-        min-width: 118px;
-    }
 }
 
     </style>
@@ -1093,8 +1060,6 @@ body {
             </section>
         </main>
 
-        <button class="save-fab" id="saveAllButton" type="button">حفظ الكل</button>
-
         <nav class="bottom-nav">
             <button class="nav-item is-active" type="button" data-panel-target="home"><span>الرئيسية</span></button>
             <button class="nav-item" type="button" data-panel-target="money"><span>الحركات</span></button>
@@ -1155,7 +1120,6 @@ body {
         setupHelper: document.getElementById("setupHelper"),
         toast: document.getElementById("toastMessage"),
         backupStatus: document.getElementById("backupStatus"),
-        saveAllButton: document.getElementById("saveAllButton"),
         safeModeToggle: document.getElementById("safeModeToggle"),
         hideNumbersToggle: document.getElementById("hideNumbersToggle"),
         budgetUsagePercent: document.getElementById("budgetUsagePercent"),
@@ -1208,7 +1172,6 @@ body {
         document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
         document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
         document.getElementById("installHintButton").addEventListener("click", showInstallHint);
-        refs.saveAllButton.addEventListener("click", saveAllNow);
         refs.startSetupButton.addEventListener("click", startSetup);
         refs.safeModeToggle.addEventListener("click", toggleSafeMode);
         refs.hideNumbersToggle.addEventListener("click", toggleHideNumbers);
@@ -1862,11 +1825,6 @@ body {
 
     function saveState() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    }
-
-    function saveAllNow() {
-        saveState();
-        toast("تم حفظ كل البيانات على هذا الجهاز.");
     }
 
     function toast(message) {
