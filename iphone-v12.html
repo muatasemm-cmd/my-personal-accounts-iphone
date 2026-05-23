@@ -1311,6 +1311,7 @@ body {
         unlocked = !state.profile.passcode || !state.profile.safeMode || unlocked;
         toast("تم حفظ الخطة وإعدادات الجهاز.");
         render();
+        switchPanel("home");
     }
 
     function onReminderSubmit(event) {
