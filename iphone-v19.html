@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <title>حساباتي | آيفون | v19</title>
     <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -36,6 +36,8 @@ body {
     margin: 0;
     min-height: 100vh;
     font-family: "SF Pro Display", "Segoe UI", Tahoma, Arial, sans-serif;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
     background:
         radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 28%),
         radial-gradient(circle at top left, rgba(245, 158, 11, 0.10), transparent 24%),
@@ -229,6 +231,7 @@ body {
     display: grid;
     gap: 10px;
     min-width: 160px;
+    max-width: 100%;
 }
 
 .summary-grid {
@@ -349,6 +352,7 @@ body {
     background: rgba(255,255,255,0.94);
     color: var(--text);
     font: inherit;
+    font-size: 16px;
     box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
@@ -361,15 +365,18 @@ body {
 
 .field-grid {
     flex-direction: row;
+    flex-wrap: wrap;
 }
 
 .field-grid > .field {
     flex: 1 1 0;
+    min-width: 0;
 }
 
 .button {
     min-height: 48px;
     padding: 12px 18px;
+    font-size: 16px;
     font-weight: 900;
     box-shadow: 0 10px 20px rgba(15, 23, 42, 0.08);
 }
@@ -420,6 +427,7 @@ body {
 
 .tabs-inline {
     margin-bottom: 8px;
+    flex-wrap: wrap;
 }
 
 .compact-tabs {
@@ -449,6 +457,7 @@ body {
     gap: 12px;
     padding: 14px 0;
     border-bottom: 1px solid #edf2f7;
+    min-width: 0;
 }
 
 .list-item:last-child { border-bottom: none; }
@@ -496,6 +505,9 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: 0;
 }
 
 .inline-button {
@@ -578,6 +590,7 @@ body {
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 8px;
+    min-width: 0;
 }
 
 .person-name {
@@ -595,10 +608,12 @@ body {
     display: flex;
     gap: 8px;
     margin-top: 10px;
+    flex-wrap: wrap;
 }
 
 .person-actions .inline-button {
     flex: 1 1 0;
+    min-width: 110px;
 }
 
 .inline-button.neutral {
@@ -626,6 +641,7 @@ body {
     border-radius: 16px;
     color: var(--text);
     font-size: .85rem;
+    min-width: 0;
 }
 
 .bottom-nav {
@@ -642,6 +658,7 @@ body {
     -webkit-backdrop-filter: blur(18px);
     justify-content: space-between;
     z-index: 30;
+    overflow-x: auto;
 }
 
 .nav-item {
@@ -705,12 +722,55 @@ body {
         align-items: stretch;
     }
 
+    .card-form,
+    .list-card,
+    .privacy-card,
+    .topbar,
+    .hero-card {
+        padding: 16px;
+    }
+
     .summary-grid {
         grid-template-columns: 1fr;
     }
 
     .quick-actions-card {
         grid-template-columns: 1fr;
+    }
+
+    .list-item,
+    .person-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .list-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .inline-button,
+    .person-actions .inline-button {
+        min-width: calc(50% - 6px);
+        flex: 1 1 calc(50% - 6px);
+    }
+
+    .summary-pill {
+        min-height: 48px;
+        padding: 10px 14px;
+        flex-wrap: wrap;
+    }
+
+    .bottom-nav {
+        gap: 6px;
+        padding: 8px;
+    }
+
+    .nav-item {
+        min-width: 0;
+        min-height: 44px;
+        font-size: .95rem;
+        padding-inline: 8px;
     }
 
 }
