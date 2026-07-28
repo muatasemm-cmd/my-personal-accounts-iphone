@@ -787,6 +787,10 @@ body {
                         <strong id="dueSoonValue">0</strong>
                     </article>
                     <article class="metric-card">
+                        <span>دفعات هذا الأسبوع</span>
+                        <strong id="dueThisWeekValue">0</strong>
+                    </article>
+                    <article class="metric-card">
                         <span>صافي الديون</span>
                         <strong data-money id="netDebtValue">₪ 0.00</strong>
                     </article>
@@ -982,7 +986,7 @@ body {
                     <div class="field-grid">
                         <label class="field">
                             <span>اسم الشخص</span>
-                            <input id="debtPerson" class="input" type="text" placeholder="مثال: أحمد" required />
+                            <input id="debtPerson" class="input" type="text" placeholder="مثال: أحمد" list="peopleSuggestions" required />
                         </label>
                         <label class="field">
                             <span>نوع الحركة</span>
@@ -1022,7 +1026,7 @@ body {
                     <div class="field-grid">
                         <label class="field">
                             <span>اسم الشخص</span>
-                            <input id="debtPlanPerson" class="input" type="text" placeholder="مثال: محمد" required />
+                            <input id="debtPlanPerson" class="input" type="text" placeholder="مثال: محمد" list="peopleSuggestions" required />
                         </label>
                         <label class="field">
                             <span>إجمالي الدين</span>
@@ -1061,6 +1065,7 @@ body {
                         <h4>كشف الديون</h4>
                     </div>
                     <div class="summary-inline" id="debtSummary"></div>
+                    <datalist id="peopleSuggestions"></datalist>
                     <div class="people-card">
                         <div class="toolbar-inline">
                             <input id="debtSearchInput" class="input search-input" type="search" placeholder="ابحث عن شخص أو ملاحظة..." />
@@ -1078,6 +1083,13 @@ body {
                     <div class="section-head compact">
                         <h4>دفعات الديون المجدولة</h4>
                         <p>كل دفعة تظهر بموعدها، وإذا تأخرت أو دُفعت متأخرًا سنوضح ذلك هنا.</p>
+                    </div>
+                    <div class="tabs-inline compact-tabs">
+                        <button class="mini-tab is-active" data-installment-filter="all" type="button">الكل</button>
+                        <button class="mini-tab" data-installment-filter="pending" type="button">بانتظار</button>
+                        <button class="mini-tab" data-installment-filter="soon" type="button">هذا الأسبوع</button>
+                        <button class="mini-tab" data-installment-filter="overdue" type="button">متأخرة</button>
+                        <button class="mini-tab" data-installment-filter="paid" type="button">مدفوعة</button>
                     </div>
                     <form class="card-form" id="installmentEditForm" hidden>
                         <div class="section-head compact">
@@ -1224,6 +1236,26 @@ body {
                     </div>
                     <div id="reminderEntries" class="list-stack"></div>
                 </div>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>ملخص آخر الشهر</h4>
+                        <p>لقطة سريعة: أين ذهب الصرف، وكيف كان تقييم الشهر؟</p>
+                    </div>
+                    <div class="summary-inline" id="monthClosingSummary"></div>
+                    <div class="list-stack" id="monthClosingInsights"></div>
+                </div>
+
+                <div class="list-card">
+                    <div class="section-head compact">
+                        <h4>أرشفة شهرية ذكية</h4>
+                        <p>اقفل الشهر الحالي بلقطة محفوظة وارجع لها لاحقًا إذا أردت.</p>
+                    </div>
+                    <div class="form-actions">
+                        <button class="button button-primary" id="archiveMonthButton" type="button">أرشفة هذا الشهر الآن</button>
+                    </div>
+                    <div id="monthlyArchivesList" class="list-stack"></div>
+                </div>
             </section>
         </main>
 
@@ -1258,7 +1290,8 @@ body {
         debtPlans: [],
         commitments: [],
         reminders: [],
-        archivedPeople: []
+        archivedPeople: [],
+        monthlyArchives: []
     };
 
     const state = loadState();
@@ -1274,6 +1307,7 @@ body {
         monthExpenseValue: document.getElementById("monthExpenseValue"),
         todayExpenseValue: document.getElementById("todayExpenseValue"),
         dueSoonValue: document.getElementById("dueSoonValue"),
+        dueThisWeekValue: document.getElementById("dueThisWeekValue"),
         netDebtValue: document.getElementById("netDebtValue"),
         todayAlert: document.getElementById("todayAlert"),
         balanceHelper: document.getElementById("balanceHelper"),
@@ -1288,11 +1322,16 @@ body {
         installmentEditCancelButton: document.getElementById("installmentEditCancelButton"),
         debtSummary: document.getElementById("debtSummary"),
         debtPlanForm: document.getElementById("debtPlanForm"),
+        peopleSuggestions: document.getElementById("peopleSuggestions"),
         debtSearchInput: document.getElementById("debtSearchInput"),
         showArchivedPeopleToggle: document.getElementById("showArchivedPeopleToggle"),
         peopleOverview: document.getElementById("peopleOverview"),
         commitmentEntries: document.getElementById("commitmentEntries"),
         reminderEntries: document.getElementById("reminderEntries"),
+        monthClosingSummary: document.getElementById("monthClosingSummary"),
+        monthClosingInsights: document.getElementById("monthClosingInsights"),
+        archiveMonthButton: document.getElementById("archiveMonthButton"),
+        monthlyArchivesList: document.getElementById("monthlyArchivesList"),
         setupHelper: document.getElementById("setupHelper"),
         toast: document.getElementById("toastMessage"),
         homeHero: document.getElementById("homeHero"),
@@ -1322,6 +1361,7 @@ body {
     };
     let currentLogFilter = "all";
     let currentMoneyPeriod = "all";
+    let currentInstallmentFilter = "all";
     let currentMoneySearch = "";
     let currentDebtSearch = "";
     let showArchivedPeople = false;
@@ -1350,6 +1390,9 @@ body {
         document.querySelectorAll("[data-period-filter]").forEach((button) => {
             button.addEventListener("click", () => switchMoneyPeriod(button.getAttribute("data-period-filter")));
         });
+        document.querySelectorAll("[data-installment-filter]").forEach((button) => {
+            button.addEventListener("click", () => switchInstallmentFilter(button.getAttribute("data-installment-filter")));
+        });
 
         document.querySelectorAll("[data-quick-panel]").forEach((button) => {
             button.addEventListener("click", () => {
@@ -1374,6 +1417,7 @@ body {
         document.getElementById("importBackupInput").addEventListener("change", importBackup);
         document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
         document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
+        refs.archiveMonthButton.addEventListener("click", archiveCurrentMonth);
         document.getElementById("installHintButton").addEventListener("click", showInstallHint);
         refs.startSetupButton.addEventListener("click", startSetup);
         refs.safeModeToggle.addEventListener("click", toggleSafeMode);
@@ -1661,6 +1705,12 @@ body {
     function switchMoneyPeriod(period) {
         currentMoneyPeriod = period;
         document.querySelectorAll("[data-period-filter]").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-period-filter") === period));
+        render();
+    }
+
+    function switchInstallmentFilter(filter) {
+        currentInstallmentFilter = filter;
+        document.querySelectorAll("[data-installment-filter]").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-installment-filter") === filter));
         render();
     }
 
@@ -2009,7 +2059,13 @@ body {
         const dueSoonCommitments = state.commitments.filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
         const dueSoonDebtInstallments = flattenDebtInstallments()
             .filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
+        const dueThisWeekDebtInstallments = flattenDebtInstallments()
+            .filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 7);
+        const overdueCommitments = state.commitments.filter((x) => !x.isPaid && daysUntil(x.dueDate) < 0);
+        const overdueDebtInstallments = flattenDebtInstallments()
+            .filter((x) => !x.isPaid && daysUntil(x.dueDate) < 0);
         const dueSoon = dueSoonCommitments.concat(dueSoonDebtInstallments);
+        const overdue = overdueCommitments.concat(overdueDebtInstallments);
         const budgetUsage = state.profile.monthlyBudget > 0 ? Math.min(100, Math.round((monthExpense / state.profile.monthlyBudget) * 100)) : 0;
         const savingCurrent = monthIncome - monthExpense;
         const savingUsage = state.profile.savingGoal > 0 ? Math.max(0, Math.min(100, Math.round((savingCurrent / state.profile.savingGoal) * 100))) : 0;
@@ -2021,6 +2077,7 @@ body {
         money(refs.todayExpenseValue, todayExpense, currency, hidden);
         money(refs.netDebtValue, netDebt, currency, hidden);
         refs.dueSoonValue.textContent = dueSoon.length;
+        refs.dueThisWeekValue.textContent = dueThisWeekDebtInstallments.length;
         refs.budgetUsagePercent.textContent = `${budgetUsage}%`;
         refs.budgetUsageBar.style.width = `${budgetUsage}%`;
         refs.budgetUsageHint.textContent = state.profile.monthlyBudget > 0
@@ -2039,7 +2096,9 @@ body {
 
         refs.todayAlert.textContent = needsSetup
             ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
-            : dueSoon.length
+            : overdue.length
+                ? `عندك ${overdue.length} استحقاق متأخر يحتاج متابعة الآن.`
+                : dueSoon.length
                 ? `عندك ${dueSoon.length} استحقاق قريب خلال 3 أيام.`
                 : state.profile.monthlyBudget > 0 && monthExpense > state.profile.monthlyBudget
                     ? "تنبيه: تجاوزت سقف المصروف الشهري."
@@ -2049,6 +2108,8 @@ body {
         renderDebts(currency, hidden);
         renderCommitments(currency, hidden);
         renderReminders();
+        renderMonthClosing(currency, hidden, monthIncome, monthExpense, monthBalance, savingCurrent);
+        renderMonthlyArchives(currency, hidden);
     }
 
     function renderOperations(currency, hidden) {
@@ -2193,11 +2254,18 @@ body {
     function renderDebts(currency, hidden) {
         const forMe = state.debts.filter((x) => x.type === "for-me").reduce((a, b) => a + Number(b.amount || 0), 0);
         const onMe = state.debts.filter((x) => x.type === "on-me").reduce((a, b) => a + Number(b.amount || 0), 0);
+        const pendingInstallments = flattenDebtInstallments().filter((item) => !item.isPaid);
+        const overdueInstallments = pendingInstallments.filter((item) => daysUntil(item.dueDate) < 0);
+        const pendingInstallmentsTotal = pendingInstallments.reduce((sum, item) => sum + Number(item.amount || 0), 0);
         refs.debtSummary.innerHTML = [
             summaryPill("إلك على الناس", hidden ? "••••" : formatMoney(forMe, currency)),
             summaryPill("عليك للناس", hidden ? "••••" : formatMoney(onMe, currency)),
-            summaryPill("صافي الديون", hidden ? "••••" : formatMoney(forMe - onMe, currency))
+            summaryPill("صافي الديون", hidden ? "••••" : formatMoney(forMe - onMe, currency)),
+            summaryPill("دفعات بانتظار", hidden ? "••••" : formatMoney(pendingInstallmentsTotal, currency)),
+            summaryPill("دفعات متأخرة", String(overdueInstallments.length))
         ].join("");
+
+        renderPeopleSuggestions();
 
         const peopleRows = buildPeopleOverview(currency, hidden);
         const visiblePeople = peopleRows
@@ -2216,6 +2284,9 @@ body {
         });
         refs.peopleOverview.querySelectorAll("[data-schedule-person]").forEach((button) => {
             button.addEventListener("click", () => prepareDebtSchedule(button.getAttribute("data-schedule-person")));
+        });
+        refs.peopleOverview.querySelectorAll("[data-delete-plan-person]").forEach((button) => {
+            button.addEventListener("click", () => deleteDebtPlansForPerson(button.getAttribute("data-delete-plan-person")));
         });
 
         let debtItems = state.debts.slice();
@@ -2257,6 +2328,7 @@ body {
         const installments = flattenDebtInstallments()
             .filter((item) => showArchivedPeople || !state.archivedPeople.includes(item.person))
             .filter((item) => !currentDebtSearch || `${item.person} ${item.note || ""}`.toLowerCase().includes(currentDebtSearch))
+            .filter(matchesInstallmentFilter)
             .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
         refs.debtInstallmentEntries.innerHTML = installments.length
@@ -2332,6 +2404,16 @@ body {
         });
     }
 
+    function matchesInstallmentFilter(item) {
+        if (currentInstallmentFilter === "all") return true;
+        const days = daysUntil(item.dueDate);
+        if (currentInstallmentFilter === "pending") return !item.isPaid;
+        if (currentInstallmentFilter === "paid") return item.isPaid;
+        if (currentInstallmentFilter === "overdue") return !item.isPaid && days < 0;
+        if (currentInstallmentFilter === "soon") return !item.isPaid && days >= 0 && days <= 7;
+        return true;
+    }
+
     function renderReminders() {
         const reminders = state.reminders
             .slice()
@@ -2367,6 +2449,150 @@ body {
         });
     }
 
+    function renderMonthClosing(currency, hidden, monthIncome, monthExpense, monthBalance, savingCurrent) {
+        const rating = buildMonthRating(monthIncome, monthExpense, monthBalance, savingCurrent);
+        const insight = buildSpendingInsight(currency, hidden);
+        refs.monthClosingSummary.innerHTML = [
+            summaryPill("تقييم الشهر", rating.label),
+            summaryPill("صافي الشهر", hidden ? "••••" : formatMoney(savingCurrent, currency)),
+            summaryPill("أعلى بند", insight.title)
+        ].join("");
+
+        const insights = [
+            {
+                title: "وين راحت المصاري؟",
+                meta: insight.hint
+            },
+            {
+                title: "وضع الشهر",
+                meta: rating.hint
+            }
+        ];
+
+        refs.monthClosingInsights.innerHTML = insights.map((item) =>
+            `<div class="list-item"><div><div class="list-title">${escapeHtml(item.title)}</div><div class="list-meta">${escapeHtml(item.meta)}</div></div></div>`
+        ).join("");
+    }
+
+    function renderMonthlyArchives(currency, hidden) {
+        const archives = (state.monthlyArchives || []).slice().sort((a, b) => String(b.monthKey).localeCompare(String(a.monthKey)));
+        refs.monthlyArchivesList.innerHTML = archives.length
+            ? archives.map((item) => monthlyArchiveMarkup(item, currency, hidden)).join("")
+            : emptyState("لا توجد أرشفة شهرية بعد.");
+
+        refs.monthlyArchivesList.querySelectorAll("[data-delete-archive]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const monthKey = button.getAttribute("data-delete-archive");
+                deleteMonthlyArchive(monthKey);
+            });
+        });
+    }
+
+    function archiveCurrentMonth() {
+        const now = new Date();
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const monthLabel = new Intl.DateTimeFormat("ar", { year: "numeric", month: "long" }).format(now);
+        const currency = state.profile.currency || "₪";
+        const monthIncomes = monthItems(state.incomes);
+        const monthExpenses = monthItems(state.expenses);
+        const monthIncome = sum(monthIncomes, "amount");
+        const monthExpense = sum(monthExpenses, "amount");
+        const net = monthIncome - monthExpense;
+        const topExpense = topExpenseCategory();
+        const rating = buildMonthRating(monthIncome, monthExpense, net, net);
+
+        const snapshot = {
+            monthKey,
+            monthLabel,
+            archivedAt: new Date().toISOString(),
+            currency,
+            income: monthIncome,
+            expense: monthExpense,
+            net,
+            topCategory: topExpense.title,
+            topCategoryAmount: topExpense.amount,
+            rating: rating.label,
+            ratingHint: rating.hint
+        };
+
+        state.monthlyArchives = (state.monthlyArchives || []).filter((item) => item.monthKey !== monthKey);
+        state.monthlyArchives.unshift(snapshot);
+        saveState();
+        render();
+        toast(`تمت أرشفة ${monthLabel}.`);
+    }
+
+    function deleteMonthlyArchive(monthKey) {
+        if (!monthKey) return;
+        if (!window.confirm("هل تريد حذف هذه الأرشفة الشهرية؟")) return;
+        state.monthlyArchives = (state.monthlyArchives || []).filter((item) => item.monthKey !== monthKey);
+        saveState();
+        render();
+        toast("تم حذف الأرشفة الشهرية.");
+    }
+
+    function monthlyArchiveMarkup(item, currency, hidden) {
+        return `<div class="list-item">
+            <div>
+                <div class="list-title">${escapeHtml(item.monthLabel)}</div>
+                <div class="list-meta">${escapeHtml(item.rating)} · ${escapeHtml(item.topCategory || "بدون بند واضح")} · ${escapeHtml(displayDate(item.archivedAt))}</div>
+            </div>
+            <div class="list-actions">
+                <div class="list-value ${Number(item.net || 0) >= 0 ? "tone-income" : "tone-expense"}">${escapeHtml(hidden ? "••••" : formatMoney(item.net, item.currency || currency))}</div>
+                <button class="inline-button danger" type="button" data-delete-archive="${escapeHtml(item.monthKey)}">حذف</button>
+            </div>
+        </div>`;
+    }
+
+    function buildMonthRating(monthIncome, monthExpense, monthBalance, savingCurrent) {
+        const budget = Number(state.profile.monthlyBudget || 0);
+        const goal = Number(state.profile.savingGoal || 0);
+        if (monthIncome <= 0 && monthExpense <= 0) {
+            return {
+                label: "بانتظار بيانات",
+                hint: "هذا الشهر لا يحتوي على دخل أو مصروف كافٍ لإعطاء تقييم عادل."
+            };
+        }
+        if (monthBalance < 0) {
+            return {
+                label: "خطر",
+                hint: "الصرف أعلى من الدخل الحالي، ويحتاج الشهر إلى شد واضح."
+            };
+        }
+        if (budget > 0 && monthExpense > budget) {
+            return {
+                label: "مضغوط",
+                hint: "تجاوزت سقف المصروف الشهري، رغم أن الرصيد لم يدخل منطقة الخطر بعد."
+            };
+        }
+        if (goal > 0 && savingCurrent >= goal) {
+            return {
+                label: "ممتاز",
+                hint: "وصلت هدف التوفير أو تجاوزته، وهذا شهر نظيف جدًا."
+            };
+        }
+        if (monthBalance > 0) {
+            return {
+                label: "جيد",
+                hint: "لا يزال معك فائض آخر الشهر، والوضع العام متزن."
+            };
+        }
+        return {
+            label: "مقبول",
+            hint: "الشهر ماشي، لكنه يحتاج ضبط أكثر حتى تشوف فرقًا أوفر."
+        };
+    }
+
+    function topExpenseCategory() {
+        const grouped = new Map();
+        monthItems(state.expenses).forEach((item) => {
+            const key = String(item.category || item.title || "متفرقات").trim() || "متفرقات";
+            grouped.set(key, (grouped.get(key) || 0) + Number(item.amount || 0));
+        });
+        const top = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1])[0];
+        return top ? { title: top[0], amount: top[1] } : { title: "لا يوجد", amount: 0 };
+    }
+
     function listItemMarkup(title, meta, valueText, tone, actions = "", metaIsHtml = false) {
         return `<div class="list-item"><div><div class="list-title">${escapeHtml(title)}</div><div class="list-meta">${metaIsHtml ? meta : escapeHtml(meta)}</div></div><div class="list-actions"><div class="list-value ${tone}">${escapeHtml(valueText)}</div>${actions}</div></div>`;
     }
@@ -2397,6 +2623,7 @@ body {
             </div>
             <div class="person-actions">
                 ${person.net < 0 ? `<button class="inline-button success" type="button" data-schedule-person="${escapeHtml(person.name)}">جدولة الدين</button>` : ""}
+                ${person.hasPlan ? `<button class="inline-button danger" type="button" data-delete-plan-person="${escapeHtml(person.name)}">حذف الجدولة</button>` : ""}
                 <button class="inline-button neutral" type="button" ${person.archived ? `data-restore-person="${escapeHtml(person.name)}"` : `data-archive-person="${escapeHtml(person.name)}"`}>
                     ${person.archived ? "استرجاع" : "أرشفة"}
                 </button>
@@ -2544,6 +2771,7 @@ body {
                 name,
                 net,
                 archived,
+                hasPlan: planStats.total > 0,
                 meta: `${items.length} حركة${archived ? " · مؤرشف" : ""}${planMeta}`,
                 searchText: `${name} ${items.map((x) => `${x.note || ""} ${debtTypeLabel(x.type)}`).join(" ")}`.toLowerCase()
             };
@@ -2559,6 +2787,19 @@ body {
         saveState();
         render();
         toast(archived ? "تم استرجاع الشخص." : "تمت أرشفة الشخص.");
+    }
+
+    function deleteDebtPlansForPerson(name) {
+        if (!name) return;
+        if (!window.confirm(`سيتم حذف كل دفعات الجدولة الخاصة بـ ${name}. هل تريد المتابعة؟`)) return;
+        state.debtPlans = state.debtPlans.filter((plan) => plan.person !== name);
+        if (editingInstallmentPlanId) {
+            const stillExists = state.debtPlans.some((plan) => plan.id === editingInstallmentPlanId);
+            if (!stillExists) resetInstallmentEditForm();
+        }
+        saveState();
+        render();
+        toast(`تم حذف جدولة ${name}.`);
     }
 
     function prepareDebtSchedule(name) {
@@ -2585,6 +2826,16 @@ body {
             if (target) target.focus();
         }, 120);
         toast(`تم تجهيز خطة سداد لـ ${name}.`);
+    }
+
+    function renderPeopleSuggestions() {
+        const names = Array.from(new Set(
+            state.debts.map((item) => String(item.person || "").trim())
+                .concat(state.debtPlans.map((item) => String(item.person || "").trim()))
+                .filter(Boolean)
+        )).sort((a, b) => a.localeCompare(b, "ar"));
+        if (!refs.peopleSuggestions) return;
+        refs.peopleSuggestions.innerHTML = names.map((name) => `<option value="${escapeHtml(name)}"></option>`).join("");
     }
 
     function commitmentItemMarkup(item, currency, hidden) {
@@ -2705,7 +2956,8 @@ body {
             debtPlans: Array.isArray(data.debtPlans) ? data.debtPlans : [],
             commitments: Array.isArray(data.commitments) ? data.commitments : [],
             reminders: Array.isArray(data.reminders) ? data.reminders : [],
-            archivedPeople: Array.isArray(data.archivedPeople) ? data.archivedPeople : []
+            archivedPeople: Array.isArray(data.archivedPeople) ? data.archivedPeople : [],
+            monthlyArchives: Array.isArray(data.monthlyArchives) ? data.monthlyArchives : []
         };
     }
 
