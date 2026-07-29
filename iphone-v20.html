@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="utf-8" />
@@ -2226,16 +2226,39 @@ body {
         if (refs.homeQuickActions) refs.homeQuickActions.hidden = activePanel !== "home";
 
         const currency = normalizeCurrency(state.profile.currency || "₪");
-        const incomesMonth = monthItems(state.incomes);
-        const expensesMonth = monthItems(state.expenses);
-        const incomesToDate = itemsUpToToday(state.incomes);
-        const expensesToDate = itemsUpToToday(state.expenses);
+        const debtCashInRows = state.debts
+            .filter((item) => item.type === "paid-to-me")
+            .map((item) => ({ ...item, title: item.note || `سداد من ${item.person}`, category: "تحصيل دين" }));
+        const debtCashOutRows = state.debts
+            .filter((item) => item.type === "paid-by-me")
+            .map((item) => ({ ...item, title: item.note || `سداد لـ ${item.person}`, category: "سداد دين" }));
+        const paidInstallmentCashRows = flattenDebtInstallments()
+            .filter((item) => item.isPaid)
+            .map((item) => ({
+                id: `installment-paid-${item.installmentId}`,
+                amount: Number(item.amount || 0),
+                currency: entryCurrency(item),
+                date: item.paidAt || item.dueDate,
+                title: `دفعة ${item.person}`,
+                category: "سداد دين مجدول",
+                note: item.note || ""
+            }));
+
+        const incomesMonth = monthItems(state.incomes.concat(debtCashInRows));
+        const expensesMonth = monthItems(state.expenses.concat(debtCashOutRows, paidInstallmentCashRows));
+        const incomesToDate = itemsUpToToday(state.incomes.concat(debtCashInRows));
+        const expensesToDate = itemsUpToToday(state.expenses.concat(debtCashOutRows, paidInstallmentCashRows));
         const monthIncome = sumByCurrency(incomesMonth, "amount");
         const monthExpense = sumByCurrency(expensesMonth, "amount");
         const runningIncome = sumByCurrency(incomesToDate, "amount");
         const runningExpense = sumByCurrency(expensesToDate, "amount");
         const monthBalance = subtractTotals(runningIncome, runningExpense);
-        const todayExpense = sumByCurrency(state.expenses.filter((x) => x.date === dateValue(new Date())), "amount");
+        const todayExpense = sumByCurrency(
+            state.expenses
+                .concat(debtCashOutRows, paidInstallmentCashRows)
+                .filter((x) => x.date === dateValue(new Date())),
+            "amount"
+        );
         const netDebt = debtNetByCurrency(state.debts);
         const dueSoonCommitments = state.commitments.filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
         const dueSoonDebtInstallments = flattenDebtInstallments().filter((x) => !x.isPaid && daysUntil(x.dueDate) >= 0 && daysUntil(x.dueDate) <= 3);
@@ -2279,7 +2302,7 @@ body {
         refs.spendingInsightHint.textContent = spendingInsight.hint;
         refs.balanceHelper.textContent = hidden
             ? "المتبقي الحالي مخفي الآن."
-            : `كل دخل مسجل حتى اليوم ${formatTotals(runningIncome, currency)} - كل مصروف مسجل حتى اليوم ${formatTotals(runningExpense, currency)} = الباقي معك الآن ${formatTotals(monthBalance, currency)}.`;
+            : `كل دخل مسجل حتى اليوم ${formatTotals(runningIncome, currency)} - كل مصروف وسداد مسجل حتى اليوم ${formatTotals(runningExpense, currency)} = الباقي معك الآن ${formatTotals(monthBalance, currency)}.`;
 
         refs.todayAlert.textContent = needsSetup
             ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
