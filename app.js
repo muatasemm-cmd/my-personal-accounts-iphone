@@ -54,6 +54,8 @@
         peopleOverview: document.getElementById("peopleOverview"),
         commitmentEntries: document.getElementById("commitmentEntries"),
         reminderEntries: document.getElementById("reminderEntries"),
+        monthlyReportSummary: document.getElementById("monthlyReportSummary"),
+        monthlyReportBreakdown: document.getElementById("monthlyReportBreakdown"),
         monthClosingSummary: document.getElementById("monthClosingSummary"),
         monthClosingInsights: document.getElementById("monthClosingInsights"),
         monthCompareSummary: document.getElementById("monthCompareSummary"),
@@ -827,23 +829,7 @@
         if (refs.homeQuickActions) refs.homeQuickActions.hidden = activePanel !== "home";
 
         const currency = normalizeCurrency(state.profile.currency || "₪");
-        const debtCashInRows = state.debts
-            .filter((item) => item.type === "paid-to-me")
-            .map((item) => ({ ...item, title: item.note || `سداد من ${item.person}`, category: "تحصيل دين" }));
-        const debtCashOutRows = state.debts
-            .filter((item) => item.type === "paid-by-me")
-            .map((item) => ({ ...item, title: item.note || `سداد لـ ${item.person}`, category: "سداد دين" }));
-        const paidInstallmentCashRows = flattenDebtInstallments()
-            .filter((item) => item.isPaid)
-            .map((item) => ({
-                id: `installment-paid-${item.installmentId}`,
-                amount: Number(item.amount || 0),
-                currency: entryCurrency(item),
-                date: item.paidAt || item.dueDate,
-                title: `دفعة ${item.person}`,
-                category: "سداد دين مجدول",
-                note: item.note || ""
-            }));
+        const { debtCashInRows, debtCashOutRows, paidInstallmentCashRows } = buildCashFlowRows();
 
         const incomesMonth = monthItems(state.incomes.concat(debtCashInRows));
         const expensesMonth = monthItems(state.expenses.concat(debtCashOutRows, paidInstallmentCashRows));
@@ -919,6 +905,7 @@
         renderDebts(currency, hidden);
         renderCommitments(currency, hidden);
         renderReminders();
+        renderMonthlyReport(currency, hidden);
         renderMonthClosing(currency, hidden, monthIncome, monthExpense, monthBalance, savingCurrent);
         renderMonthComparison(currency, hidden);
         renderDamageReport(currency, hidden);
@@ -1377,6 +1364,75 @@
         ).join("");
     }
 
+    function renderMonthlyReport(currency, hidden) {
+        const { debtCashInRows, debtCashOutRows, paidInstallmentCashRows } = buildCashFlowRows();
+        const incomeRows = monthItems(state.incomes);
+        const expenseRows = monthItems(state.expenses);
+        const collectedDebtRows = monthItems(debtCashInRows);
+        const paidDebtRows = monthItems(debtCashOutRows);
+        const scheduledPaidRows = monthItems(paidInstallmentCashRows);
+
+        const monthIncomeTotal = sumByCurrency(incomeRows, "amount");
+        const monthExpenseTotal = sumByCurrency(expenseRows, "amount");
+        const collectedDebtTotal = sumByCurrency(collectedDebtRows, "amount");
+        const paidDebtTotal = sumByCurrency(paidDebtRows, "amount");
+        const scheduledPaidTotal = sumByCurrency(scheduledPaidRows, "amount");
+        const totalIncoming = sumMaps(monthIncomeTotal, collectedDebtTotal);
+        const totalOutgoing = sumMaps(sumMaps(monthExpenseTotal, paidDebtTotal), scheduledPaidTotal);
+        const netMonth = subtractTotals(totalIncoming, totalOutgoing);
+
+        refs.monthlyReportSummary.innerHTML = [
+            summaryPill("دخل الشهر", hidden ? "••••" : formatTotals(totalIncoming, currency)),
+            summaryPill("خارج الشهر", hidden ? "••••" : formatTotals(totalOutgoing, currency)),
+            summaryPill("صافي الشهر", hidden ? "••••" : formatTotals(netMonth, currency))
+        ].join("");
+
+        const reportRows = [
+            {
+                title: "الدخل المباشر",
+                meta: `${incomeRows.length} حركة دخل مسجلة هذا الشهر.`,
+                value: hidden ? "••••" : formatTotals(monthIncomeTotal, currency),
+                tone: "tone-income"
+            },
+            {
+                title: "تحصيل الديون",
+                meta: `${collectedDebtRows.length} حركة تحصيل دين هذا الشهر.`,
+                value: hidden ? "••••" : formatTotals(collectedDebtTotal, currency),
+                tone: "tone-income"
+            },
+            {
+                title: "المصروف المباشر",
+                meta: `${expenseRows.length} حركة مصروف عادية هذا الشهر.`,
+                value: hidden ? "••••" : formatTotals(monthExpenseTotal, currency),
+                tone: "tone-expense"
+            },
+            {
+                title: "سداد الديون",
+                meta: `${paidDebtRows.length} حركة سداد دين غير مجدولة هذا الشهر.`,
+                value: hidden ? "••••" : formatTotals(paidDebtTotal, currency),
+                tone: "tone-warning"
+            },
+            {
+                title: "الدفعات المجدولة المدفوعة",
+                meta: `${scheduledPaidRows.length} دفعة مجدولة تم دفعها هذا الشهر.`,
+                value: hidden ? "••••" : formatTotals(scheduledPaidTotal, currency),
+                tone: "tone-warning"
+            },
+            {
+                title: "خلاصة واضحة",
+                meta: hidden
+                    ? "فعّل إظهار الأرقام لتشوف تقرير الشهر كاملًا."
+                    : `دخلك الكلي هذا الشهر ${formatTotals(totalIncoming, currency)}، وخارجك الكلي ${formatTotals(totalOutgoing, currency)}، والمتبقي من حركة هذا الشهر ${formatTotals(netMonth, currency)}.`,
+                value: hidden ? "••••" : formatTotals(netMonth, currency),
+                tone: amountForCurrency(netMonth, currency) >= 0 ? "tone-income" : "tone-expense"
+            }
+        ];
+
+        refs.monthlyReportBreakdown.innerHTML = reportRows.map((item) =>
+            `<div class="list-item"><div><div class="list-title">${escapeHtml(item.title)}</div><div class="list-meta">${escapeHtml(item.meta)}</div></div><div class="list-actions"><div class="list-value ${item.tone}">${escapeHtml(item.value)}</div></div></div>`
+        ).join("");
+    }
+
     function renderMonthlyArchives(currency, hidden) {
         const archives = (state.monthlyArchives || []).slice().sort((a, b) => String(b.monthKey).localeCompare(String(a.monthKey)));
         refs.monthlyArchivesList.innerHTML = archives.length
@@ -1598,6 +1654,46 @@
             const date = new Date(item.date);
             return date.getMonth() === previousMonth.getMonth() && date.getFullYear() === previousMonth.getFullYear();
         });
+    }
+
+    function buildCashFlowRows() {
+        const debtCashInRows = state.debts
+            .filter((item) => item.type === "paid-to-me")
+            .map((item) => ({
+                ...item,
+                title: item.note || `سداد من ${item.person}`,
+                category: "تحصيل دين"
+            }));
+        const debtCashOutRows = state.debts
+            .filter((item) => item.type === "paid-by-me")
+            .map((item) => ({
+                ...item,
+                title: item.note || `سداد لـ ${item.person}`,
+                category: "سداد دين"
+            }));
+        const paidInstallmentCashRows = flattenDebtInstallments()
+            .filter((item) => item.isPaid)
+            .map((item) => ({
+                id: `installment-paid-${item.installmentId}`,
+                amount: Number(item.amount || 0),
+                currency: entryCurrency(item),
+                date: item.paidAt || item.dueDate,
+                createdAt: item.paidAt || item.dueDate,
+                title: `دفعة ${item.person}`,
+                category: "سداد دين مجدول",
+                note: item.note || "",
+                person: item.person,
+                planId: item.planId,
+                installmentId: item.installmentId,
+                sourceKind: "installment-payment",
+                sourceId: `${item.planId}:${item.installmentId}`
+            }));
+
+        return {
+            debtCashInRows,
+            debtCashOutRows,
+            paidInstallmentCashRows
+        };
     }
 
     function averageDailyExpenseCurrentMonth(currency) {
