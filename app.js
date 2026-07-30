@@ -175,6 +175,27 @@
         refs.commitmentCancelEditButton.addEventListener("click", resetCommitmentForm);
         refs.reminderCancelEditButton.addEventListener("click", resetReminderForm);
         refs.installmentEditCancelButton.addEventListener("click", resetInstallmentEditForm);
+
+        document.addEventListener("focusin", handleKeyboardFocus, true);
+        document.addEventListener("focusout", handleKeyboardBlur, true);
+    }
+
+    function handleKeyboardFocus(event) {
+        const target = event.target;
+        if (!target || !matchesEditableField(target)) return;
+        document.body.classList.add("keyboard-open");
+    }
+
+    function handleKeyboardBlur() {
+        window.setTimeout(() => {
+            const active = document.activeElement;
+            if (matchesEditableField(active)) return;
+            document.body.classList.remove("keyboard-open");
+        }, 60);
+    }
+
+    function matchesEditableField(element) {
+        return !!(element && element.matches && element.matches("input, select, textarea"));
     }
 
     function seedDates() {
