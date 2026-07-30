@@ -47,6 +47,8 @@
         installmentEditSaveButton: document.getElementById("installmentEditSaveButton"),
         installmentEditCancelButton: document.getElementById("installmentEditCancelButton"),
         debtSummary: document.getElementById("debtSummary"),
+        debtPlanSummary: document.getElementById("debtPlanSummary"),
+        debtSmartList: document.getElementById("debtSmartList"),
         debtPlanForm: document.getElementById("debtPlanForm"),
         peopleSuggestions: document.getElementById("peopleSuggestions"),
         debtSearchInput: document.getElementById("debtSearchInput"),
@@ -517,7 +519,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v22.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v24.");
     }
 
     function startSetup() {
@@ -1159,6 +1161,25 @@
         const pendingInstallments = flattenDebtInstallments().filter((item) => !item.isPaid);
         const overdueInstallments = pendingInstallments.filter((item) => daysUntil(item.dueDate) < 0);
         const pendingInstallmentsTotal = sumByCurrency(pendingInstallments, "amount");
+        const paidInstallmentsThisMonth = flattenDebtInstallments().filter((item) => item.isPaid && isInCurrentMonth(item.paidAt || item.dueDate));
+        const directDebtPaymentsThisMonth = state.debts.filter((item) => item.type === "paid-by-me" && isInCurrentMonth(item.date));
+        const debtCollectedThisMonth = state.debts.filter((item) => item.type === "paid-to-me" && isInCurrentMonth(item.date));
+        const paidThisMonthTotals = sumMaps(
+            sumByCurrency(directDebtPaymentsThisMonth, "amount"),
+            sumByCurrency(paidInstallmentsThisMonth, "amount")
+        );
+        const nextInstallment = pendingInstallments
+            .slice()
+            .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+        const completedPlans = state.debtPlans.filter((plan) => (plan.installments || []).length && (plan.installments || []).every((item) => item.isPaid)).length;
+        const activePlans = state.debtPlans.filter((plan) => (plan.installments || []).some((item) => !item.isPaid)).length;
+        const biggestOnMe = topGroupedValue(
+            state.debts.filter((item) => item.type === "on-me"),
+            (item) => `${item.person} · ${entryCurrency(item)}`,
+            (key) => key
+        );
+        const biggestOnMeInfo = splitLabeledCurrencyKey(biggestOnMe.key || biggestOnMe.label);
+
         refs.debtSummary.innerHTML = [
             summaryPill("إلك على الناس", hidden ? "••••" : formatTotals(forMe, currency)),
             summaryPill("عليك للناس", hidden ? "••••" : formatTotals(onMe, currency)),
@@ -1166,6 +1187,39 @@
             summaryPill("دفعات بانتظار", hidden ? "••••" : formatTotals(pendingInstallmentsTotal, currency)),
             summaryPill("دفعات متأخرة", String(overdueInstallments.length))
         ].join("");
+        refs.debtPlanSummary.innerHTML = [
+            summaryPill("سددت هذا الشهر", hidden ? "••••" : formatTotals(paidThisMonthTotals, currency)),
+            summaryPill("تم تحصيله", hidden ? "••••" : formatTotals(sumByCurrency(debtCollectedThisMonth, "amount"), currency)),
+            summaryPill("خطط نشطة", String(activePlans)),
+            summaryPill("خطط مكتملة", String(completedPlans))
+        ].join("");
+        const smartDebtLines = [
+            {
+                title: "أقرب دفعة تحتاج متابعة",
+                meta: nextInstallment
+                    ? `${nextInstallment.person} · ${displayDate(nextInstallment.dueDate)} · ${daysUntil(nextInstallment.dueDate) < 0 ? `متأخرة ${Math.abs(daysUntil(nextInstallment.dueDate))} يوم` : daysUntil(nextInstallment.dueDate) === 0 ? "موعدها اليوم" : `بعد ${daysUntil(nextInstallment.dueDate)} يوم`}`
+                    : "لا توجد دفعات بانتظار الآن.",
+                value: nextInstallment ? (hidden ? "••••" : formatMoney(nextInstallment.amount, entryCurrency(nextInstallment))) : "مرتاح",
+                tone: nextInstallment ? installmentTone(nextInstallment) : "tone-income"
+            },
+            {
+                title: "أكبر شخص عليك له",
+                meta: biggestOnMeInfo.label || "لا يوجد حاليًا",
+                value: biggestOnMe.amount ? (hidden ? "••••" : formatMoney(biggestOnMe.amount, biggestOnMeInfo.currency)) : "0",
+                tone: "tone-debt"
+            },
+            {
+                title: "وضع السداد هذا الشهر",
+                meta: paidInstallmentsThisMonth.length || directDebtPaymentsThisMonth.length
+                    ? `دفعات مجدولة مدفوعة: ${paidInstallmentsThisMonth.length} · سداد مباشر: ${directDebtPaymentsThisMonth.length}`
+                    : "لم تسجل سداد ديون هذا الشهر بعد.",
+                value: hidden ? "••••" : formatTotals(paidThisMonthTotals, currency),
+                tone: amountForCurrency(paidThisMonthTotals, currency) > 0 ? "tone-warning" : "tone-income"
+            }
+        ];
+        refs.debtSmartList.innerHTML = smartDebtLines.map((item) =>
+            `<div class="list-item"><div><div class="list-title">${escapeHtml(item.title)}</div><div class="list-meta">${escapeHtml(item.meta)}</div></div><div class="list-actions"><div class="list-value ${item.tone}">${escapeHtml(item.value)}</div></div></div>`
+        ).join("");
 
         renderPeopleSuggestions();
 
