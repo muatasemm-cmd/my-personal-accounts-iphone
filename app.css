@@ -1,4 +1,5 @@
-﻿:root {
+﻿/* release v24-2 */
+:root {
     --bg: #f5f7fb;
     --surface: rgba(255, 255, 255, 0.88);
     --surface-strong: #ffffff;
@@ -821,3 +822,4 @@ body.keyboard-open .toast {
     }
 
 }
+

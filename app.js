@@ -519,7 +519,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v24.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v24-2.");
     }
 
     function startSetup() {
