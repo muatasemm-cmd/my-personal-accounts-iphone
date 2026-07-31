@@ -186,6 +186,7 @@
         const target = event.target;
         if (!target || !matchesEditableField(target)) return;
         document.body.classList.add("keyboard-open");
+        document.body.classList.add("ios-writing-mode");
     }
 
     function handleKeyboardBlur() {
@@ -193,6 +194,7 @@
             const active = document.activeElement;
             if (matchesEditableField(active)) return;
             document.body.classList.remove("keyboard-open");
+            document.body.classList.remove("ios-writing-mode");
         }, 60);
     }
 
@@ -519,7 +521,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v24-2.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v25.");
     }
 
     function startSetup() {
@@ -529,7 +531,7 @@
             const nameInput = document.getElementById("profileName");
             if (nameInput) {
                 nameInput.focus();
-                nameInput.scrollIntoView({ behavior: "smooth", block: "center" });
+                smartScrollIntoView(nameInput, "center");
             }
         }, 260);
     }
@@ -655,7 +657,7 @@
         resetDebtForm();
         setValue("debtPerson", name);
         window.setTimeout(() => {
-            document.getElementById("debtForm")?.scrollIntoView({ behavior: "smooth", block: "start" });
+            smartScrollIntoView(document.getElementById("debtForm"), "start");
             document.getElementById("debtType")?.focus();
         }, 120);
         toast(`أضف حركة جديدة لـ ${name}.`);
@@ -739,7 +741,7 @@
         setValue("installmentEditDate", installment.dueDate);
         setValue("installmentEditNote", installment.note || plan.note || "");
         refs.installmentEditForm.hidden = false;
-        refs.installmentEditForm.scrollIntoView({ behavior: "smooth", block: "start" });
+        smartScrollIntoView(refs.installmentEditForm, "start");
         document.getElementById("installmentEditAmount")?.focus();
         toast(`تعديل دفعة ${installment.sequence}/${plan.installmentCount} لـ ${plan.person}.`);
     }
@@ -2071,11 +2073,22 @@
         if (!value("debtPlanStartDate")) setValue("debtPlanStartDate", dateValue(new Date()));
         switchPanel("debts");
         window.setTimeout(() => {
-            refs.debtPlanForm?.scrollIntoView({ behavior: "smooth", block: "start" });
+            smartScrollIntoView(refs.debtPlanForm, "start");
             const target = document.getElementById("debtPlanCount");
             if (target) target.focus();
         }, 120);
         toast(negativeCurrencies.length > 1 ? `تم تجهيز خطة سداد لـ ${name}. تأكد من اختيار العملة الصحيحة.` : `تم تجهيز خطة سداد لـ ${name}.`);
+    }
+
+    function smartScrollIntoView(element, block = "center") {
+        if (!element || !element.scrollIntoView) return;
+        const behavior = isIOSLike() ? "auto" : "smooth";
+        element.scrollIntoView({ behavior, block });
+    }
+
+    function isIOSLike() {
+        const ua = window.navigator.userAgent || "";
+        return /iPhone|iPad|iPod/i.test(ua);
     }
 
     function renderPeopleSuggestions() {
