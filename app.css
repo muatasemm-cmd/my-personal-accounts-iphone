@@ -684,6 +684,10 @@ body.keyboard-open .bottom-nav {
     display: none;
 }
 
+body.numeric-pad-open .bottom-nav {
+    display: none;
+}
+
 .nav-item {
     flex: 1 1 0;
     min-height: 46px;
@@ -740,6 +744,89 @@ body.keyboard-open .bottom-nav {
 
 body.keyboard-open .toast {
     display: none;
+}
+
+body.numeric-pad-open .toast {
+    display: none;
+}
+
+.numeric-pad[hidden] {
+    display: none !important;
+}
+
+.numeric-pad {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+}
+
+.numeric-pad-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.28);
+    border: 0;
+}
+
+.numeric-pad-sheet {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    display: grid;
+    gap: 12px;
+    padding: 18px 16px calc(env(safe-area-inset-bottom, 0px) + 18px);
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    box-shadow: 0 -20px 40px rgba(15, 23, 42, 0.18);
+}
+
+.numeric-pad-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.numeric-pad-screen {
+    min-height: 58px;
+    padding: 14px 16px;
+    border: 1px solid rgba(148, 163, 184, 0.26);
+    border-radius: 20px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 1.6rem;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 0.02em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.numeric-pad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.numeric-key {
+    min-height: 58px;
+    border: 1px solid rgba(37, 99, 235, 0.14);
+    border-radius: 18px;
+    background: #ffffff;
+    color: var(--ink);
+    font-size: 1.28rem;
+    font-weight: 900;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.numeric-key-muted {
+    background: #eef4ff;
+    color: var(--primary-dark);
+}
+
+.numeric-pad-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
 }
 
 @supports (-webkit-touch-callout: none) {

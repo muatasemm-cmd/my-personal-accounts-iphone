@@ -84,6 +84,14 @@
         spendingInsightTitle: document.getElementById("spendingInsightTitle"),
         spendingInsightHint: document.getElementById("spendingInsightHint"),
         startSetupButton: document.getElementById("startSetupButton"),
+        numericPad: document.getElementById("numericPad"),
+        numericPadBackdrop: document.getElementById("numericPadBackdrop"),
+        numericPadTitle: document.getElementById("numericPadTitle"),
+        numericPadPreview: document.getElementById("numericPadPreview"),
+        numericPadClose: document.getElementById("numericPadClose"),
+        numericPadClear: document.getElementById("numericPadClear"),
+        numericPadBackspace: document.getElementById("numericPadBackspace"),
+        numericPadDone: document.getElementById("numericPadDone"),
         expenseSubmitButton: document.getElementById("expenseSubmitButton"),
         expenseCancelEditButton: document.getElementById("expenseCancelEditButton"),
         incomeSubmitButton: document.getElementById("incomeSubmitButton"),
@@ -110,6 +118,7 @@
     let editingReminderId = "";
     let editingInstallmentPlanId = "";
     let editingInstallmentId = "";
+    let activeNumericInputId = "";
 
     function bind() {
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
@@ -178,6 +187,7 @@
         refs.reminderCancelEditButton.addEventListener("click", resetReminderForm);
         refs.installmentEditCancelButton.addEventListener("click", resetInstallmentEditForm);
 
+        bindNumericPad();
         document.addEventListener("focusin", handleKeyboardFocus, true);
         document.addEventListener("focusout", handleKeyboardBlur, true);
     }
@@ -199,7 +209,103 @@
     }
 
     function matchesEditableField(element) {
-        return !!(element && element.matches && element.matches("input, select, textarea"));
+        return !!(
+            element &&
+            element.matches &&
+            element.matches("input, select, textarea") &&
+            !element.hasAttribute("data-numeric-input") &&
+            !element.readOnly
+        );
+    }
+
+    function bindNumericPad() {
+        document.querySelectorAll("[data-numeric-input]").forEach((input) => {
+            input.addEventListener("click", () => openNumericPad(input.id, input.getAttribute("data-numeric-title") || "إدخال الرقم"));
+            input.addEventListener("focus", () => openNumericPad(input.id, input.getAttribute("data-numeric-title") || "إدخال الرقم"));
+        });
+
+        document.querySelectorAll("[data-numeric-key]").forEach((button) => {
+            button.addEventListener("click", () => appendNumericKey(button.getAttribute("data-numeric-key") || ""));
+        });
+
+        refs.numericPadBackdrop?.addEventListener("click", closeNumericPad);
+        refs.numericPadClose?.addEventListener("click", closeNumericPad);
+        refs.numericPadDone?.addEventListener("click", closeNumericPad);
+        refs.numericPadClear?.addEventListener("click", clearNumericValue);
+        refs.numericPadBackspace?.addEventListener("click", backspaceNumericValue);
+    }
+
+    function openNumericPad(inputId, title) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        activeNumericInputId = inputId;
+        if (document.activeElement && document.activeElement !== input && document.activeElement.blur) {
+            document.activeElement.blur();
+        }
+        refs.numericPadTitle.textContent = title || "إدخال الرقم";
+        updateNumericPadPreview();
+        refs.numericPad.hidden = false;
+        document.body.classList.add("numeric-pad-open");
+        document.body.classList.remove("keyboard-open");
+        document.body.classList.remove("ios-writing-mode");
+    }
+
+    function closeNumericPad() {
+        activeNumericInputId = "";
+        if (refs.numericPad) refs.numericPad.hidden = true;
+        document.body.classList.remove("numeric-pad-open");
+        document.body.classList.remove("keyboard-open");
+    }
+
+    function getActiveNumericInput() {
+        return activeNumericInputId ? document.getElementById(activeNumericInputId) : null;
+    }
+
+    function updateNumericPadPreview() {
+        const input = getActiveNumericInput();
+        if (!refs.numericPadPreview) return;
+        refs.numericPadPreview.textContent = input && input.value ? input.value : "0";
+    }
+
+    function appendNumericKey(key) {
+        const input = getActiveNumericInput();
+        if (!input || !key) return;
+        const isPasscode = input.id === "unlockCode" || input.id === "profilePasscode";
+        let nextValue = String(input.value || "");
+
+        if (isPasscode) {
+            if (!/^\d+$/.test(key)) return;
+            const maxLength = Number(input.getAttribute("maxlength") || 12);
+            if (nextValue.length >= maxLength) return;
+            nextValue += key;
+        } else {
+            if (key === "." && nextValue.includes(".")) return;
+            if (key === "." && !nextValue) {
+                nextValue = "0.";
+            } else {
+                nextValue += key;
+            }
+        }
+
+        input.value = nextValue;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        updateNumericPadPreview();
+    }
+
+    function clearNumericValue() {
+        const input = getActiveNumericInput();
+        if (!input) return;
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        updateNumericPadPreview();
+    }
+
+    function backspaceNumericValue() {
+        const input = getActiveNumericInput();
+        if (!input) return;
+        input.value = String(input.value || "").slice(0, -1);
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        updateNumericPadPreview();
     }
 
     function seedDates() {
@@ -452,12 +558,13 @@
     }
 
     function switchPanel(panel) {
+        closeNumericPad();
         document.querySelectorAll(".panel").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-panel") === panel));
         document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-panel-target") === panel));
         const isHome = panel === "home";
         if (refs.homeHero) refs.homeHero.hidden = !isHome;
         if (refs.homeQuickActions) refs.homeQuickActions.hidden = !isHome;
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: isIOSLike() ? "auto" : "smooth" });
     }
 
     function switchMoneyTab(tab) {
@@ -521,7 +628,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v25.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v27.");
     }
 
     function startSetup() {
