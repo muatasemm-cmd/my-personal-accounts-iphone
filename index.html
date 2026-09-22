@@ -3,14 +3,15 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
-    <title>حساباتي | آيفون | v27</title>
+    <title>حساباتي الشخصية</title>
     <meta name="theme-color" content="#0f172a" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="حساباتي v27" />
+    <meta name="apple-mobile-web-app-title" content="حساباتي الشخصية" />
     <link rel="icon" href="./favicon.ico" />
     <link rel="apple-touch-icon" href="./favicon.ico" />
-    <link rel="stylesheet" href="./app.css?v=27" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./app.css?v=28" />
 </head>
 <body>
 <div class="app-shell" id="appShell">
@@ -31,7 +32,7 @@
             <header class="topbar">
                 <div>
                     <p class="eyebrow">نسخة آيفون أولية</p>
-                    <p class="version-badge">الإصدار v27 | إصلاح القفل</p>
+                    <p class="version-badge">الإصدار v28 | دورة الراتب المرنة</p>
                     <h1>حساباتي</h1>
                     <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
                 </div>
@@ -44,7 +45,7 @@
             <section class="hero-card home-only" id="homeHero">
                 <div class="hero-head">
                     <div class="hero-copy">
-                        <p class="eyebrow">ملخص اليوم والشهر</p>
+                        <p class="eyebrow">ملخص اليوم ودورة الراتب</p>
                         <h2 id="deviceTitle">ابدأ إعداد هذا الجهاز</h2>
                         <p class="hero-helper" id="setupHelper" hidden>
                             هذا جهاز جديد. ابدأ من الخطة وحدد الاسم والعملة وسقف الصرف حتى يبدأ التطبيق يحسب لك بشكل صحيح.
@@ -66,11 +67,11 @@
                         <strong data-money id="monthBalanceValue">₪ 0.00</strong>
                     </article>
                     <article class="metric-card">
-                        <span>دخل هذا الشهر</span>
+                        <span>دخل دورة الراتب</span>
                         <strong data-money id="monthIncomeValue">₪ 0.00</strong>
                     </article>
                     <article class="metric-card">
-                        <span>مصروف هذا الشهر</span>
+                        <span>مصروف دورة الراتب</span>
                         <strong data-money id="monthExpenseValue">₪ 0.00</strong>
                     </article>
                     <article class="metric-card">
@@ -91,6 +92,7 @@
                     </article>
                 </div>
                 <div class="alert-card" id="todayAlert">لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.</div>
+                <p class="helper" id="salaryCycleHint">تبدأ دورة الحساب تلقائيًا في يوم تسجيل راتبك.</p>
                 <p class="helper" id="balanceHelper">هذا هو الرصيد الجاري حتى اليوم بعد احتساب كل دخل ومصروف مسجل بتاريخ اليوم أو قبله.</p>
             </section>
 
@@ -285,11 +287,11 @@
                     </div>
                     <div class="tabs-inline compact-tabs">
                         <button class="mini-tab is-active" data-period-filter="all" type="button">كل الفترات</button>
-                        <button class="mini-tab" data-period-filter="month" type="button">هذا الشهر</button>
+                        <button class="mini-tab" data-period-filter="month" type="button">دورة الراتب</button>
                         <button class="mini-tab" data-period-filter="week" type="button">هذا الأسبوع</button>
                         <button class="mini-tab" data-period-filter="today" type="button">اليوم</button>
                         <button class="mini-tab" data-period-filter="future" type="button">القادم</button>
-                        <button class="mini-tab" data-period-filter="other-month" type="button">خارج الشهر</button>
+                        <button class="mini-tab" data-period-filter="other-month" type="button">خارج الدورة</button>
                     </div>
                     <div id="moneyEntries" class="list-stack"></div>
                 </div>
@@ -586,12 +588,12 @@
             <section class="panel" data-panel="reports">
                 <div class="section-head">
                     <h3>التقارير</h3>
-                    <p>تقرير الشهر، المقارنة، كشف أين ذهب الصرف، وأرشفة الشهور السابقة.</p>
+                    <p>تقرير دورة الراتب، المقارنة، كشف أين ذهب الصرف، وأرشفة الدورات السابقة.</p>
                 </div>
                 <div class="list-card">
                     <div class="section-head compact">
-                        <h4>تقرير الشهر</h4>
-                        <p>كل الذي دخل هذا الشهر، وكل الذي خرج منك، بما فيه سداد الديون والدفعات.</p>
+                        <h4>تقرير دورة الراتب</h4>
+                        <p>من يوم قبض الراتب الحالي حتى موعد الراتب التالي، مهما تغيّر يوم القبض.</p>
                     </div>
                     <div class="summary-inline" id="monthlyReportSummary"></div>
                     <div class="list-stack" id="monthlyReportBreakdown"></div>
@@ -599,8 +601,8 @@
 
                 <div class="list-card">
                     <div class="section-head compact">
-                        <h4>ملخص آخر الشهر</h4>
-                        <p>لقطة سريعة: أين ذهب الصرف، وكيف كان تقييم الشهر؟</p>
+                        <h4>ملخص الدورة الحالية</h4>
+                        <p>لقطة سريعة: أين ذهب الصرف، وكيف كان تقييم دورة الراتب؟</p>
                     </div>
                     <div class="summary-inline" id="monthClosingSummary"></div>
                     <div class="list-stack" id="monthClosingInsights"></div>
@@ -608,7 +610,7 @@
 
                 <div class="list-card">
                     <div class="section-head compact">
-                        <h4>مقارنة مع الشهر الماضي</h4>
+                        <h4>مقارنة مع دورة الراتب السابقة</h4>
                         <p>حتى تعرف: هل تحسن وضعك، أم زاد الصرف عليك؟</p>
                     </div>
                     <div class="summary-inline" id="monthCompareSummary"></div>
@@ -618,18 +620,18 @@
                 <div class="list-card">
                     <div class="section-head compact">
                         <h4>كشف الخراب</h4>
-                        <p>أكثر شيء أتعبك هذا الشهر: يوم الصرف، البند، والشخص.</p>
+                        <p>أكثر شيء أتعبك في دورة الراتب: يوم الصرف، البند، والشخص.</p>
                     </div>
                     <div class="list-stack" id="damageReportList"></div>
                 </div>
 
                 <div class="list-card">
                     <div class="section-head compact">
-                        <h4>أرشفة شهرية ذكية</h4>
-                        <p>اقفل الشهر الحالي بلقطة محفوظة وارجع لها لاحقًا إذا أردت.</p>
+                        <h4>أرشفة دورات الراتب</h4>
+                        <p>احفظ لقطة من دورة الراتب الحالية وارجع لها لاحقًا.</p>
                     </div>
                     <div class="form-actions">
-                        <button class="button button-primary" id="archiveMonthButton" type="button">أرشفة هذا الشهر الآن</button>
+                        <button class="button button-primary" id="archiveMonthButton" type="button">أرشفة دورة الراتب الآن</button>
                     </div>
                     <div id="monthlyArchivesList" class="list-stack"></div>
                 </div>
@@ -680,6 +682,11 @@
 
         <div class="toast" id="toastMessage" hidden></div>
     </div>
-<script src="./app.js?v=27"></script>
+<script src="./app.js?v=28"></script>
+<script>
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
+}
+</script>
 </body>
 </html>

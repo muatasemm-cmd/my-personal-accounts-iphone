@@ -1,10 +1,10 @@
-const CACHE_NAME = "personalaccounts-iphone-v8";
+const CACHE_NAME = "personalaccounts-web-v28";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./css/app.css",
-  "./js/app.js",
+  "./app.css?v=28",
+  "./app.js?v=28",
   "./favicon.ico"
 ];
 

@@ -29,6 +29,7 @@
         unlockError: document.getElementById("unlockError"),
         deviceTitle: document.getElementById("deviceTitle"),
         monthBalanceValue: document.getElementById("monthBalanceValue"),
+        salaryCycleHint: document.getElementById("salaryCycleHint"),
         monthIncomeValue: document.getElementById("monthIncomeValue"),
         monthExpenseValue: document.getElementById("monthExpenseValue"),
         todayExpenseValue: document.getElementById("todayExpenseValue"),
@@ -961,6 +962,7 @@
         if (refs.homeQuickActions) refs.homeQuickActions.hidden = activePanel !== "home";
 
         const currency = normalizeCurrency(state.profile.currency || "₪");
+        const activeCycle = currentSalaryCycle();
         const { debtCashInRows, debtCashOutRows, paidInstallmentCashRows } = buildCashFlowRows();
 
         const incomesMonth = monthItems(state.incomes.concat(debtCashInRows));
@@ -1022,6 +1024,9 @@
         refs.balanceHelper.textContent = hidden
             ? "المتبقي الحالي مخفي الآن."
             : `كل دخل مسجل حتى اليوم ${formatTotals(runningIncome, currency)} - كل مصروف وسداد مسجل حتى اليوم ${formatTotals(runningExpense, currency)} = الباقي معك الآن ${formatTotals(monthBalance, currency)}.`;
+        refs.salaryCycleHint.textContent = activeCycle.isSalaryBased
+            ? `دورة الراتب الحالية بدأت يوم ${displayDate(activeCycle.start)}، وتستمر تلقائيًا حتى تسجّل الراتب القادم.`
+            : "لم يُسجّل راتب بعد؛ نعرض الشهر الميلادي مؤقتًا. عند تسجيل دخل بتصنيف «راتب» تبدأ دورتك تلقائيًا.";
 
         refs.todayAlert.textContent = needsSetup
             ? "هذا جهاز جديد. افتح الخطة وحدد الاسم والعملة وسقف المصروف حتى يبدأ الاستخدام بشكل صحيح."
@@ -1196,17 +1201,13 @@
         if (!dateString) return "";
         const target = new Date(dateString);
         const today = new Date();
-        const targetMonth = target.getMonth();
-        const targetYear = target.getFullYear();
-        const currentMonth = today.getMonth();
-        const currentYear = today.getFullYear();
-        if (targetYear === currentYear && targetMonth === currentMonth) {
+        if (isInCurrentMonth(dateString)) {
             return "";
         }
         if (target > today) {
-            return '<span class="meta-badge future">شهر قادم</span>';
+            return '<span class="meta-badge future">تاريخ قادم</span>';
         }
-        return '<span class="meta-badge other-month">شهر آخر</span>';
+        return '<span class="meta-badge other-month">دورة أخرى</span>';
     }
 
     function matchesMoneyPeriod(item) {
@@ -1224,13 +1225,13 @@
             return target >= start && target <= endOfToday;
         }
         if (currentMoneyPeriod === "month") {
-            return target.getMonth() === today.getMonth() && target.getFullYear() === today.getFullYear();
+            return isDateInCycle(item.date, currentSalaryCycle());
         }
         if (currentMoneyPeriod === "future") {
             return target > endOfToday;
         }
         if (currentMoneyPeriod === "other-month") {
-            return !(target.getMonth() === today.getMonth() && target.getFullYear() === today.getFullYear());
+            return !isDateInCycle(item.date, currentSalaryCycle());
         }
         return true;
     }
@@ -1243,7 +1244,7 @@
         if (!monthExpenses.length) {
             return {
                 title: "بانتظار حركات",
-                hint: "أضف مصاريف هذا الشهر لنوضح أكثر بند استنزفك."
+                hint: "أضف مصاريف في دورة الراتب لنوضح أكثر بند استنزفك."
             };
         }
         const grouped = new Map();
@@ -1260,7 +1261,7 @@
             title: hidden ? "التفاصيل مخفية" : `${topCategory} (${topCurrency})`,
             hint: hidden
                 ? "فعّل إظهار الأرقام لمعرفة تفاصيل أعلى بند صرف."
-                : `أعلى بند صرف هذا الشهر هو ${topCategory} بعملة ${topCurrency} وقيمته ${formatMoney(topAmount, topCurrency)} ويشكل ${percent}% من مصروف هذه العملة.`
+                : `أعلى بند صرف في دورة الراتب هو ${topCategory} بعملة ${topCurrency} وقيمته ${formatMoney(topAmount, topCurrency)} ويشكل ${percent}% من مصروف هذه العملة.`
         };
     }
 
@@ -1297,7 +1298,7 @@
             summaryPill("دفعات متأخرة", String(overdueInstallments.length))
         ].join("");
         refs.debtPlanSummary.innerHTML = [
-            summaryPill("سددت هذا الشهر", hidden ? "••••" : formatTotals(paidThisMonthTotals, currency)),
+            summaryPill("سددت في هذه الدورة", hidden ? "••••" : formatTotals(paidThisMonthTotals, currency)),
             summaryPill("تم تحصيله", hidden ? "••••" : formatTotals(sumByCurrency(debtCollectedThisMonth, "amount"), currency)),
             summaryPill("خطط نشطة", String(activePlans)),
             summaryPill("خطط مكتملة", String(completedPlans))
@@ -1318,10 +1319,10 @@
                 tone: "tone-debt"
             },
             {
-                title: "وضع السداد هذا الشهر",
+                title: "وضع السداد في هذه الدورة",
                 meta: paidInstallmentsThisMonth.length || directDebtPaymentsThisMonth.length
                     ? `دفعات مجدولة مدفوعة: ${paidInstallmentsThisMonth.length} · سداد مباشر: ${directDebtPaymentsThisMonth.length}`
-                    : "لم تسجل سداد ديون هذا الشهر بعد.",
+                    : "لم تسجل سداد ديون في دورة الراتب بعد.",
                 value: hidden ? "••••" : formatTotals(paidThisMonthTotals, currency),
                 tone: amountForCurrency(paidThisMonthTotals, currency) > 0 ? "tone-warning" : "tone-income"
             }
@@ -1566,39 +1567,39 @@
         const netMonth = subtractTotals(totalIncoming, totalOutgoing);
 
         refs.monthlyReportSummary.innerHTML = [
-            summaryPill("دخل الشهر", hidden ? "••••" : formatTotals(totalIncoming, currency)),
-            summaryPill("خارج الشهر", hidden ? "••••" : formatTotals(totalOutgoing, currency)),
-            summaryPill("صافي الشهر", hidden ? "••••" : formatTotals(netMonth, currency))
+            summaryPill("دخل الدورة", hidden ? "••••" : formatTotals(totalIncoming, currency)),
+            summaryPill("خارج الدورة", hidden ? "••••" : formatTotals(totalOutgoing, currency)),
+            summaryPill("صافي الدورة", hidden ? "••••" : formatTotals(netMonth, currency))
         ].join("");
 
         const reportRows = [
             {
                 title: "الدخل المباشر",
-                meta: `${incomeRows.length} حركة دخل مسجلة هذا الشهر.`,
+                meta: `${incomeRows.length} حركة دخل مسجلة في هذه الدورة.`,
                 value: hidden ? "••••" : formatTotals(monthIncomeTotal, currency),
                 tone: "tone-income"
             },
             {
                 title: "تحصيل الديون",
-                meta: `${collectedDebtRows.length} حركة تحصيل دين هذا الشهر.`,
+                meta: `${collectedDebtRows.length} حركة تحصيل دين في هذه الدورة.`,
                 value: hidden ? "••••" : formatTotals(collectedDebtTotal, currency),
                 tone: "tone-income"
             },
             {
                 title: "المصروف المباشر",
-                meta: `${expenseRows.length} حركة مصروف عادية هذا الشهر.`,
+                meta: `${expenseRows.length} حركة مصروف عادية في هذه الدورة.`,
                 value: hidden ? "••••" : formatTotals(monthExpenseTotal, currency),
                 tone: "tone-expense"
             },
             {
                 title: "سداد الديون",
-                meta: `${paidDebtRows.length} حركة سداد دين غير مجدولة هذا الشهر.`,
+                meta: `${paidDebtRows.length} حركة سداد دين غير مجدولة في هذه الدورة.`,
                 value: hidden ? "••••" : formatTotals(paidDebtTotal, currency),
                 tone: "tone-warning"
             },
             {
                 title: "الدفعات المجدولة المدفوعة",
-                meta: `${scheduledPaidRows.length} دفعة مجدولة تم دفعها هذا الشهر.`,
+                meta: `${scheduledPaidRows.length} دفعة مجدولة تم دفعها في هذه الدورة.`,
                 value: hidden ? "••••" : formatTotals(scheduledPaidTotal, currency),
                 tone: "tone-warning"
             },
@@ -1606,7 +1607,7 @@
                 title: "خلاصة واضحة",
                 meta: hidden
                     ? "فعّل إظهار الأرقام لتشوف تقرير الشهر كاملًا."
-                    : `دخلك الكلي هذا الشهر ${formatTotals(totalIncoming, currency)}، وخارجك الكلي ${formatTotals(totalOutgoing, currency)}، والمتبقي من حركة هذا الشهر ${formatTotals(netMonth, currency)}.`,
+                    : `دخلك الكلي في هذه الدورة ${formatTotals(totalIncoming, currency)}، وخارجك الكلي ${formatTotals(totalOutgoing, currency)}، والمتبقي من حركة الدورة ${formatTotals(netMonth, currency)}.`,
                 value: hidden ? "••••" : formatTotals(netMonth, currency),
                 tone: amountForCurrency(netMonth, currency) >= 0 ? "tone-income" : "tone-expense"
             }
@@ -1648,11 +1649,11 @@
 
         const lines = [
             Object.keys(previousIncome).length || Object.keys(previousExpense).length
-                ? `مقارنة بالشهر الماضي: ${amountForCurrency(expenseDiff, currency) > 0 ? "صرفك زاد" : amountForCurrency(expenseDiff, currency) < 0 ? "صرفك انخفض" : "صرفك ثابت"} بمقدار ${hidden ? "••••" : formatMoney(Math.abs(amountForCurrency(expenseDiff, currency)), currency)} في العملة الأساسية.`
-                : "لا توجد بيانات كافية من الشهر الماضي للمقارنة الكاملة.",
+                ? `مقارنة بدورة الراتب السابقة: ${amountForCurrency(expenseDiff, currency) > 0 ? "صرفك زاد" : amountForCurrency(expenseDiff, currency) < 0 ? "صرفك انخفض" : "صرفك ثابت"} بمقدار ${hidden ? "••••" : formatMoney(Math.abs(amountForCurrency(expenseDiff, currency)), currency)} في العملة الأساسية.`
+                : "لا توجد بيانات كافية من دورة الراتب السابقة للمقارنة الكاملة.",
             better
-                ? "الوضع الحالي أفضل أو أهدأ من الشهر الماضي من ناحية الصرف."
-                : "هذا الشهر أثقل من الشهر الماضي ويحتاج شدًّا أكثر."
+                ? "الدورة الحالية أفضل أو أهدأ من الدورة السابقة من ناحية الصرف."
+                : "دورة الراتب الحالية أثقل من السابقة وتحتاج شدًّا أكثر."
         ];
 
         refs.monthCompareInsights.innerHTML = lines.map((text) =>
@@ -1663,7 +1664,7 @@
     function renderDamageReport(currency, hidden) {
         const monthExpenseRows = monthItems(state.expenses);
         if (!monthExpenseRows.length) {
-            refs.damageReportList.innerHTML = emptyState("أضف مصاريف هذا الشهر حتى نبني كشف الخراب.");
+            refs.damageReportList.innerHTML = emptyState("أضف مصاريف في دورة الراتب حتى نبني كشف الخراب.");
             return;
         }
 
@@ -1689,7 +1690,7 @@
                 tone: "tone-warning"
             },
             {
-                title: "أكثر شخص عليك له هذا الشهر",
+                title: "أكثر شخص عليك له في هذه الدورة",
                 meta: topPersonInfo.label,
                 value: hidden ? "••••" : formatMoney(topPerson.amount, topPersonInfo.currency),
                 tone: "tone-debt"
@@ -1702,9 +1703,11 @@
     }
 
     function archiveCurrentMonth() {
-        const now = new Date();
-        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-        const monthLabel = new Intl.DateTimeFormat("ar", { year: "numeric", month: "long" }).format(now);
+        const cycle = currentSalaryCycle();
+        const monthKey = `salary-cycle-${cycle.start || dateValue(new Date())}`;
+        const monthLabel = cycle.isSalaryBased
+            ? `دورة راتب بدأت ${displayDate(cycle.start)}`
+            : new Intl.DateTimeFormat("ar", { year: "numeric", month: "long" }).format(new Date());
         const currency = state.profile.currency || "₪";
         const monthIncomes = monthItems(state.incomes);
         const monthExpenses = monthItems(state.expenses);
@@ -1763,7 +1766,7 @@
         if (monthIncome <= 0 && monthExpense <= 0) {
             return {
                 label: "بانتظار بيانات",
-                hint: "هذا الشهر لا يحتوي على دخل أو مصروف كافٍ لإعطاء تقييم عادل."
+                hint: "دورة الراتب لا تحتوي على دخل أو مصروف كافٍ لإعطاء تقييم عادل."
             };
         }
         if (monthBalance < 0) {
@@ -1832,12 +1835,8 @@
     }
 
     function previousMonthItems(items) {
-        const now = new Date();
-        const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        return items.filter((item) => {
-            const date = new Date(item.date);
-            return date.getMonth() === previousMonth.getMonth() && date.getFullYear() === previousMonth.getFullYear();
-        });
+        const cycle = previousSalaryCycle();
+        return items.filter((item) => isDateInCycle(item.date, cycle));
     }
 
     function buildCashFlowRows() {
@@ -1923,10 +1922,7 @@
     }
 
     function isInCurrentMonth(dateString) {
-        if (!dateString) return false;
-        const date = new Date(dateString);
-        const now = new Date();
-        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+        return isDateInCycle(dateString, currentSalaryCycle());
     }
 
     function listItemMarkup(title, meta, valueText, tone, actions = "", metaIsHtml = false) {
@@ -2240,11 +2236,54 @@
     }
 
     function monthItems(items) {
+        const cycle = currentSalaryCycle();
+        return items.filter((item) => isDateInCycle(item.date, cycle));
+    }
+
+    function isSalaryIncome(item) {
+        const label = String(item?.category || item?.title || "").trim();
+        return label === "راتب";
+    }
+
+    function salaryStartDates() {
+        return Array.from(new Set(state.incomes.filter(isSalaryIncome).map((item) => String(item.date || "").slice(0, 10)).filter(Boolean)))
+            .sort((a, b) => a.localeCompare(b));
+    }
+
+    function calendarCycle(offset = 0) {
         const now = new Date();
-        return items.filter((item) => {
-            const date = new Date(item.date);
-            return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-        });
+        const start = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        const end = new Date(now.getFullYear(), now.getMonth() + offset + 1, 1);
+        return { start: dateValue(start), end: dateValue(end), isSalaryBased: false };
+    }
+
+    function currentSalaryCycle() {
+        const today = dateValue(new Date());
+        const starts = salaryStartDates();
+        const startIndex = starts.map((date, index) => ({ date, index })).filter((item) => item.date <= today).pop()?.index;
+        if (startIndex === undefined) return calendarCycle(0);
+        return {
+            start: starts[startIndex],
+            end: starts[startIndex + 1] || "",
+            isSalaryBased: true
+        };
+    }
+
+    function previousSalaryCycle() {
+        const current = currentSalaryCycle();
+        if (!current.isSalaryBased) return calendarCycle(-1);
+        const starts = salaryStartDates();
+        const currentIndex = starts.indexOf(current.start);
+        if (currentIndex <= 0) return { start: "", end: current.start, isSalaryBased: true };
+        return { start: starts[currentIndex - 1], end: current.start, isSalaryBased: true };
+    }
+
+    function isDateInCycle(dateText, cycle) {
+        const normalized = String(dateText || "").slice(0, 10);
+        if (!normalized || !cycle) return false;
+        if (cycle.start && normalized < cycle.start) return false;
+        if (cycle.end && normalized >= cycle.end) return false;
+        return true;
     }
 
     function itemsUpToToday(items) {
