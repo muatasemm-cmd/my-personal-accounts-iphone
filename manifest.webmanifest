@@ -1,5 +1,5 @@
 {
-  "name": "حساباتي | آيفون",
+  "name": "حساباتي الشخصية",
   "short_name": "حساباتي",
   "start_url": "./index.html",
   "scope": "./",
@@ -8,12 +8,9 @@
   "theme_color": "#0f172a",
   "lang": "ar",
   "dir": "rtl",
-  "description": "نسخة iPhone-first من حساباتي، محلية بالكامل على الجهاز مع خصوصية ونسخ احتياطي JSON.",
+  "description": "إدارة الحسابات الشخصية ودورات الراتب والديون محليًا مع نسخ احتياطي مشفر.",
   "icons": [
-    {
-      "src": "./favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    }
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }

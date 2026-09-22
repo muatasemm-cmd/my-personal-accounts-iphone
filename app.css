@@ -533,6 +533,13 @@ button {
 .cycle-bar.expense { background: var(--danger); }
 .cycle-chart-values { font-size: .72rem; color: var(--muted); }
 
+@media print {
+    .topbar-actions, .bottom-nav, .quick-actions-card, .button, .inline-button, .panel:not([data-panel="reports"]) { display: none !important; }
+    .panel[data-panel="reports"] { display: block !important; }
+    body, .app-shell { background: #fff !important; }
+    .list-card { break-inside: avoid; box-shadow: none !important; }
+}
+
 .list-value {
     text-align: left;
     font-weight: 900;

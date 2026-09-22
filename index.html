@@ -9,9 +9,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="حساباتي الشخصية" />
     <link rel="icon" href="./favicon.ico" />
-    <link rel="apple-touch-icon" href="./favicon.ico" />
+    <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=29" />
+    <link rel="stylesheet" href="./app.css?v=30" />
 </head>
 <body>
 <div class="app-shell" id="appShell">
@@ -32,7 +32,7 @@
             <header class="topbar">
                 <div>
                     <p class="eyebrow">نسخة آيفون أولية</p>
-                    <p class="version-badge">الإصدار v29 | مزايا نسخة الآيفون</p>
+                    <p class="version-badge">الإصدار v30 | النسخة النهائية</p>
                     <h1>حساباتي</h1>
                     <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
                 </div>
@@ -41,6 +41,7 @@
                     <button class="chip chip-dark" id="hideNumbersToggle" type="button">إخفاء الأرقام</button>
                 </div>
             </header>
+            <div class="alert-card" id="updateBanner" hidden>يوجد تحديث جديد. <button class="inline-button success" id="applyUpdateButton" type="button">تحديث الآن</button></div>
 
             <section class="hero-card home-only" id="homeHero">
                 <div class="hero-head">
@@ -93,6 +94,7 @@
                 </div>
                 <div class="alert-card" id="todayAlert">لا يوجد تنبيه مهم الآن، وضع الميزانية مستقر.</div>
                 <p class="helper" id="salaryCycleHint">تبدأ دورة الحساب تلقائيًا في يوم تسجيل راتبك.</p>
+                <div class="summary-inline" id="cycleDetails"></div>
                 <p class="helper" id="balanceHelper">هذا هو الرصيد الجاري حتى اليوم بعد احتساب كل دخل ومصروف مسجل بتاريخ اليوم أو قبله.</p>
             </section>
 
@@ -288,6 +290,12 @@
                     <div class="toolbar-inline">
                         <input id="moneySearchInput" class="input search-input" type="search" placeholder="ابحث: خبز، راتب، مدارس..." />
                     </div>
+                    <div class="field-grid">
+                        <label class="field"><span>من تاريخ</span><input id="moneyDateFrom" class="input" type="date" /></label>
+                        <label class="field"><span>إلى تاريخ</span><input id="moneyDateTo" class="input" type="date" /></label>
+                        <label class="field"><span>الحساب</span><select id="moneyAccountFilter" class="input"><option value="">كل الحسابات</option></select></label>
+                        <label class="field"><span>العملة</span><select id="moneyCurrencyFilter" class="input"><option value="">كل العملات</option><option value="₪">₪</option><option value="JD">JD</option><option value="$">$</option><option value="€">€</option></select></label>
+                    </div>
                     <div class="tabs-inline compact-tabs">
                         <button class="mini-tab is-active" data-log-filter="all" type="button">الكل</button>
                         <button class="mini-tab" data-log-filter="expense" type="button">مصروف</button>
@@ -303,6 +311,12 @@
                     </div>
                     <div id="moneyEntries" class="list-stack"></div>
                 </div>
+
+                <form class="card-form" id="transferForm">
+                    <div class="section-head compact"><h4>تحويل بين الحسابات</h4><p>لا يُحسب دخلًا أو مصروفًا.</p></div>
+                    <div class="field-grid"><label class="field"><span>من</span><select id="transferFrom" class="input"></select></label><label class="field"><span>إلى</span><select id="transferTo" class="input"></select></label><label class="field"><span>المبلغ</span><input id="transferAmount" class="input" type="number" min="0.01" step="0.01" required /></label><label class="field"><span>العملة</span><select id="transferCurrency" class="input"><option>₪</option><option>JD</option><option>$</option><option>€</option></select></label><label class="field"><span>التاريخ</span><input id="transferDate" class="input" type="date" required /></label></div>
+                    <button class="button button-primary" type="submit">حفظ التحويل</button>
+                </form>
             </section>
 
             <section class="panel" data-panel="debts">
@@ -327,6 +341,7 @@
                                 <option value="paid-by-me">دفعت له</option>
                             </select>
                         </label>
+                        <label class="field"><span>الحساب / المحفظة</span><select id="debtAccount" class="input"></select></label>
                     </div>
                     <div class="field-grid">
                         <label class="field">
@@ -391,6 +406,7 @@
                                 <option value="daily30">كل 30 يوم</option>
                             </select>
                         </label>
+                        <label class="field"><span>حساب السداد</span><select id="debtPlanAccount" class="input"></select></label>
                         <label class="field">
                             <span>العملة</span>
                             <select id="debtPlanCurrency" class="input">
@@ -513,6 +529,19 @@
                     <div id="categoryAccountList" class="list-stack"></div>
                 </div>
 
+                <form class="card-form" id="openingBalanceForm">
+                    <div class="section-head compact"><h4>الرصيد الافتتاحي وتسوية الرصيد</h4><p>أدخل الموجود الحقيقي في الحساب، وسيُسجل الفرق كتسوية.</p></div>
+                    <div class="field-grid"><label class="field"><span>الحساب</span><select id="balanceAccount" class="input"></select></label><label class="field"><span>العملة</span><select id="balanceCurrency" class="input"><option>₪</option><option>JD</option><option>$</option><option>€</option></select></label><label class="field"><span>الرصيد الحقيقي</span><input id="balanceActual" class="input" type="number" step="0.01" required /></label><label class="field"><span>التاريخ</span><input id="balanceDate" class="input" type="date" required /></label></div>
+                    <button class="button button-primary" type="submit">تسوية الرصيد</button>
+                </form>
+
+                <form class="card-form" id="recurringForm">
+                    <div class="section-head compact"><h4>دخل أو مصروف متكرر</h4><p>يظهر مستحقًا لتؤكده عند حلول موعده.</p></div>
+                    <div class="field-grid"><label class="field"><span>النوع</span><select id="recurringKind" class="input"><option value="expense">مصروف</option><option value="income">دخل</option></select></label><label class="field"><span>العنوان</span><input id="recurringTitle" class="input" required /></label><label class="field"><span>المبلغ</span><input id="recurringAmount" class="input" type="number" min="0.01" step="0.01" required /></label><label class="field"><span>أول موعد</span><input id="recurringDate" class="input" type="date" required /></label><label class="field"><span>الحساب</span><select id="recurringAccount" class="input"></select></label><label class="field"><span>العملة</span><select id="recurringCurrency" class="input"><option>₪</option><option>JD</option><option>$</option><option>€</option></select></label></div>
+                    <button class="button button-primary" type="submit">إضافة حركة متكررة</button>
+                    <div id="recurringList" class="list-stack"></div>
+                </form>
+
                 <form class="card-form" id="commitmentForm">
                     <div class="field-grid">
                         <label class="field">
@@ -565,18 +594,23 @@
                 </div>
 
                 <div class="card-form">
-                    <button class="button button-primary" id="exportBackupButton" type="button">تصدير نسخة JSON</button>
+                    <label class="field"><span>كلمة مرور النسخة المشفرة</span><input id="backupPassword" class="input" type="password" minlength="6" placeholder="6 أحرف أو أكثر" /></label>
+                    <button class="button button-primary" id="exportBackupButton" type="button">تصدير نسخة مشفرة</button>
                     <button class="button button-outline" id="exportCsvButton" type="button">تصدير Excel (CSV)</button>
                     <button class="button button-outline" id="exportPdfButton" type="button">تصدير / طباعة PDF</button>
                     <button class="button button-outline" id="enableNotificationsButton" type="button">تفعيل تنبيهات الاستحقاق</button>
                     <label class="button button-outline file-button">
                         استيراد نسخة
-                        <input id="importBackupInput" type="file" accept="application/json" hidden />
+                        <input id="importBackupInput" type="file" accept="application/json,.paenc" hidden />
                     </label>
                     <button class="button button-outline" id="lockDeviceButton" type="button">قفل الجهاز الآن</button>
+                    <button class="button button-outline" id="undoButton" type="button">تراجع عن آخر تعديل</button>
                     <button class="button button-danger" id="resetDeviceButton" type="button">تصفير بيانات هذا الجهاز</button>
                     <p class="helper" id="backupStatus">آخر نسخة: لا يوجد بعد.</p>
                 </div>
+
+                <div class="list-card"><div class="section-head compact"><h4>سلة المحذوفات</h4><p>تبقى العناصر 30 يومًا ويمكن استعادتها.</p></div><div id="trashList" class="list-stack"></div></div>
+                <div class="list-card"><div class="section-head compact"><h4>فحص سلامة البيانات</h4></div><button class="button button-outline" id="runAuditButton" type="button">افحص الآن</button><div id="auditResults" class="list-stack"></div></div>
 
                 <form class="card-form" id="reminderForm">
                     <div class="section-head compact">
@@ -625,6 +659,7 @@
                     <div class="section-head compact"><h4>أرصدة الحسابات والمحافظ</h4></div>
                     <div id="accountBalances" class="list-stack"></div>
                 </div>
+                <div class="list-card"><div class="section-head compact"><h4>تحليل متقدم</h4></div><div id="advancedInsights" class="list-stack"></div></div>
                 <div class="list-card">
                     <div class="section-head compact">
                         <h4>تقرير دورة الراتب</h4>
@@ -717,7 +752,7 @@
 
         <div class="toast" id="toastMessage" hidden></div>
     </div>
-<script src="./app.js?v=29"></script>
+<script src="./app.js?v=30"></script>
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));

@@ -1,11 +1,13 @@
-const CACHE_NAME = "personalaccounts-web-v29";
+const CACHE_NAME = "personalaccounts-web-v30";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./app.css?v=29",
-  "./app.js?v=29",
-  "./favicon.ico"
+  "./app.css?v=30",
+  "./app.js?v=30",
+  "./favicon.ico",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -38,4 +40,8 @@ self.addEventListener("fetch", (event) => {
         .catch(() => caches.match("./index.html"));
     })
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") self.skipWaiting();
 });

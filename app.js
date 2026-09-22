@@ -1,5 +1,7 @@
 ﻿(function () {
     const STORAGE_KEY = "personalaccounts.iphone.v1";
+    const APP_VERSION = "30";
+    const DB_NAME = "personalaccounts.final.v1";
     const DEFAULT_STATE = {
         profile: {
             deviceName: "",
@@ -7,6 +9,7 @@
             monthlyBudget: 0,
             savingGoal: 0,
             passcode: "",
+            passcodeHash: "",
             safeMode: false,
             hideNumbers: false
             ,categories: ["عام", "راتب", "طعام", "بيت", "سيارة", "علاج", "فواتير", "متفرقات"]
@@ -20,6 +23,10 @@
         reminders: [],
         archivedPeople: [],
         peopleDetails: {},
+        transfers: [],
+        recurringEntries: [],
+        trash: [],
+        lastBackupAt: "",
         monthlyArchives: []
     };
 
@@ -72,6 +79,12 @@
         cycleChart: document.getElementById("cycleChart"),
         accountBalances: document.getElementById("accountBalances"),
         categoryAccountList: document.getElementById("categoryAccountList"),
+        cycleDetails: document.getElementById("cycleDetails"),
+        updateBanner: document.getElementById("updateBanner"),
+        trashList: document.getElementById("trashList"),
+        auditResults: document.getElementById("auditResults"),
+        recurringList: document.getElementById("recurringList"),
+        advancedInsights: document.getElementById("advancedInsights"),
         setupHelper: document.getElementById("setupHelper"),
         toast: document.getElementById("toastMessage"),
         homeHero: document.getElementById("homeHero"),
@@ -115,8 +128,12 @@
     let currentInstallmentFilter = "all";
     let currentMoneySearch = "";
     let currentDebtSearch = "";
+    let moneyDateFrom = "";
+    let moneyDateTo = "";
+    let moneyAccountFilter = "";
+    let moneyCurrencyFilter = "";
     let showArchivedPeople = false;
-    let unlocked = !state.profile.passcode || !state.profile.safeMode;
+    let unlocked = !hasPasscode() || !state.profile.safeMode;
     let toastTimer = 0;
     let editingExpenseId = "";
     let editingIncomeId = "";
@@ -128,6 +145,10 @@
     let activeNumericInputId = "";
     let pendingExpenseReceipt = "";
     let pendingIncomeReceipt = "";
+    let lastPersistedSnapshot = JSON.stringify(state);
+    let undoSnapshot = "";
+    let idleTimer = 0;
+    let suppressUndo = false;
 
     function bind() {
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
@@ -177,6 +198,15 @@
         document.getElementById("incomeReceipt").addEventListener("change", (event) => loadReceipt(event, "income"));
         document.getElementById("clearExpenseReceipt").addEventListener("click", () => clearReceipt("expense"));
         document.getElementById("clearIncomeReceipt").addEventListener("click", () => clearReceipt("income"));
+        document.getElementById("transferForm").addEventListener("submit", onTransferSubmit);
+        document.getElementById("openingBalanceForm").addEventListener("submit", onBalanceReconcile);
+        document.getElementById("recurringForm").addEventListener("submit", onRecurringSubmit);
+        document.getElementById("undoButton").addEventListener("click", undoLastChange);
+        document.getElementById("runAuditButton").addEventListener("click", renderAudit);
+        document.getElementById("applyUpdateButton").addEventListener("click", applyUpdate);
+        ["moneyDateFrom", "moneyDateTo", "moneyAccountFilter", "moneyCurrencyFilter"].forEach((id) => document.getElementById(id).addEventListener("change", updateAdvancedFilters));
+        ["pointerdown", "keydown", "touchstart"].forEach((name) => document.addEventListener(name, resetIdleLock, { passive: true }));
+        document.addEventListener("visibilitychange", () => { if (document.hidden) scheduleIdleLock(60000); else resetIdleLock(); });
         document.getElementById("importBackupInput").addEventListener("change", importBackup);
         document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
         document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
@@ -328,7 +358,7 @@
 
     function seedDates() {
         const today = dateValue(new Date());
-        ["expenseDate", "incomeDate", "debtDate", "commitmentDate", "debtPlanStartDate"].forEach((id) => {
+        ["expenseDate", "incomeDate", "debtDate", "commitmentDate", "debtPlanStartDate", "transferDate", "balanceDate", "recurringDate"].forEach((id) => {
             const element = document.getElementById(id);
             if (element && !element.value) element.value = today;
         });
@@ -427,6 +457,7 @@
             amount: amount("debtAmount"),
             date: value("debtDate"),
             currency: normalizeCurrency(value("debtCurrency") || state.profile.currency || "₪"),
+            account: value("debtAccount") || "نقدي",
             note: value("debtNote")
         };
         if (payload.amount <= 0) { toast("أدخل مبلغًا أكبر من صفر."); return; }
@@ -487,6 +518,7 @@
         const startDate = value("debtPlanStartDate");
         const interval = value("debtPlanInterval") || "monthly";
         const currency = normalizeCurrency(value("debtPlanCurrency") || state.profile.currency || "₪");
+        const account = value("debtPlanAccount") || "نقدي";
         const note = value("debtPlanNote");
 
         const installments = buildInstallments(total, count, startDate).map((item, index) => ({
@@ -505,6 +537,7 @@
             totalAmount: total,
             installmentCount: count,
             currency,
+            account,
             interval,
             startDate,
             note,
@@ -518,15 +551,16 @@
         render();
     }
 
-    function onPlanSubmit(event) {
+    async function onPlanSubmit(event) {
         event.preventDefault();
         state.profile.deviceName = value("profileName");
         state.profile.currency = value("profileCurrency") || "₪";
         state.profile.monthlyBudget = amount("profileBudget");
         state.profile.savingGoal = amount("profileSavingGoal");
-        state.profile.passcode = value("profilePasscode");
+        const nextPasscode = value("profilePasscode");
+        if (nextPasscode) { state.profile.passcodeHash = await hashText(nextPasscode); state.profile.passcode = ""; }
         saveState();
-        unlocked = !state.profile.passcode || !state.profile.safeMode || unlocked;
+        unlocked = !hasPasscode() || !state.profile.safeMode || unlocked;
         toast("تم حفظ الخطة وإعدادات الجهاز.");
         render();
         switchPanel("home");
@@ -588,6 +622,67 @@
         render();
     }
 
+    function onTransferSubmit(event) {
+        event.preventDefault();
+        const from = value("transferFrom"), to = value("transferTo"), transferAmount = amount("transferAmount");
+        if (!from || !to || from === to || transferAmount <= 0) { toast("اختر حسابين مختلفين ومبلغًا صحيحًا."); return; }
+        state.transfers.unshift({ id: crypto.randomUUID(), from, to, amount: transferAmount, currency: normalizeCurrency(value("transferCurrency")), date: value("transferDate"), createdAt: new Date().toISOString() });
+        saveState(); event.target.reset(); seedDates(); render(); toast("تم حفظ التحويل دون احتسابه دخلًا أو مصروفًا.");
+    }
+
+    function onBalanceReconcile(event) {
+        event.preventDefault();
+        const account = value("balanceAccount"), currency = normalizeCurrency(value("balanceCurrency")), actual = amount("balanceActual");
+        const current = accountBalance(account, currency);
+        const difference = actual - current;
+        if (Math.abs(difference) < .005) { toast("الرصيد مطابق ولا يحتاج تسوية."); return; }
+        const row = { id: crypto.randomUUID(), title: "تسوية رصيد", amount: Math.abs(difference), date: value("balanceDate"), currency, category: "تسوية", account, note: `تسوية من ${formatMoney(current, currency)} إلى ${formatMoney(actual, currency)}`, createdAt: new Date().toISOString() };
+        (difference > 0 ? state.incomes : state.expenses).unshift(row);
+        rememberCategory("تسوية"); saveState(); event.target.reset(); seedDates(); render(); toast("تمت تسوية الرصيد.");
+    }
+
+    function onRecurringSubmit(event) {
+        event.preventDefault();
+        const recurringAmount = amount("recurringAmount");
+        if (recurringAmount <= 0) return;
+        state.recurringEntries.unshift({ id: crypto.randomUUID(), kind: value("recurringKind"), title: value("recurringTitle"), amount: recurringAmount, nextDate: value("recurringDate"), account: value("recurringAccount"), currency: normalizeCurrency(value("recurringCurrency")), active: true });
+        saveState(); event.target.reset(); seedDates(); render(); toast("تمت إضافة الحركة المتكررة.");
+    }
+
+    function applyRecurring(id) {
+        const item = state.recurringEntries.find((row) => row.id === id);
+        if (!item) return;
+        const row = { id: crypto.randomUUID(), title: item.title, category: item.title, amount: item.amount, date: item.nextDate, account: item.account, currency: item.currency, note: "حركة متكررة مؤكدة", createdAt: new Date().toISOString() };
+        (item.kind === "income" ? state.incomes : state.expenses).unshift(row);
+        item.nextDate = addCalendarMonth(item.nextDate);
+        saveState(); render(); toast("تم تأكيد الحركة ونقل الموعد للشهر القادم.");
+    }
+
+    function deleteRecurring(id) {
+        const item = state.recurringEntries.find((row) => row.id === id);
+        if (item) moveToTrash("recurring", item);
+        state.recurringEntries = state.recurringEntries.filter((row) => row.id !== id);
+        saveState(); render();
+    }
+
+    function updateAdvancedFilters() {
+        moneyDateFrom = value("moneyDateFrom"); moneyDateTo = value("moneyDateTo");
+        moneyAccountFilter = value("moneyAccountFilter"); moneyCurrencyFilter = value("moneyCurrencyFilter");
+        render();
+    }
+
+    function scheduleIdleLock(delay = 300000) {
+        clearTimeout(idleTimer);
+        idleTimer = window.setTimeout(() => { if (state.profile.safeMode && hasPasscode()) { unlocked = false; render(); } }, delay);
+    }
+
+    function resetIdleLock() { scheduleIdleLock(300000); }
+
+    function applyUpdate() {
+        if (navigator.serviceWorker?.controller) navigator.serviceWorker.controller.postMessage({ type: "SKIP_WAITING" });
+        window.location.reload();
+    }
+
     function switchPanel(panel) {
         closeNumericPad();
         document.querySelectorAll(".panel").forEach((item) => item.classList.toggle("is-active", item.getAttribute("data-panel") === panel));
@@ -621,9 +716,26 @@
         render();
     }
 
-    function unlock(event) {
+    function hasPasscode() { return !!(state.profile.passcodeHash || state.profile.passcode); }
+
+    async function hashText(text) {
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text)));
+        return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    }
+
+    async function migrateLegacyPasscode() {
+        if (state.profile.passcode && !state.profile.passcodeHash) {
+            state.profile.passcodeHash = await hashText(state.profile.passcode);
+            state.profile.passcode = "";
+            saveState();
+        }
+    }
+
+    async function unlock(event) {
         event.preventDefault();
-        if (value("unlockCode") === state.profile.passcode) {
+        const entered = value("unlockCode");
+        const matches = state.profile.passcodeHash ? await hashText(entered) === state.profile.passcodeHash : entered === state.profile.passcode;
+        if (matches) {
             unlocked = true;
             refs.unlockError.textContent = "";
             refs.unlockCode.value = "";
@@ -636,7 +748,7 @@
     function toggleSafeMode() {
         state.profile.safeMode = !state.profile.safeMode;
         saveState();
-        if (state.profile.safeMode && state.profile.passcode) {
+        if (state.profile.safeMode && hasPasscode()) {
             unlocked = false;
         }
         render();
@@ -650,7 +762,7 @@
     }
 
     function lockNow() {
-        if (!state.profile.passcode) {
+        if (!hasPasscode()) {
             toast("أضف رمز قفل أولًا من قسم الخطة.");
             return;
         }
@@ -659,7 +771,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v29.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v30.");
     }
 
     function startSetup() {
@@ -710,6 +822,7 @@
         document.getElementById("debtForm").reset();
         seedDates();
         setValue("debtCurrency", normalizeCurrency(state.profile.currency || "₪"));
+        setValue("debtAccount", state.profile.accounts[0] || "نقدي");
         setFormEditing(refs.debtSubmitButton, refs.debtCancelEditButton, false, "حفظ التعديل", "حفظ الحركة");
     }
 
@@ -795,6 +908,7 @@
         setValue("debtAmount", item.amount);
         setValue("debtDate", item.date);
         setValue("debtCurrency", normalizeCurrency(item.currency || state.profile.currency || "₪"));
+        setValue("debtAccount", item.account || "نقدي");
         setValue("debtPhone", state.peopleDetails[item.person]?.phone || "");
         setValue("debtNote", item.note || "");
         setFormEditing(refs.debtSubmitButton, refs.debtCancelEditButton, true, "حفظ التعديل", "حفظ الحركة");
@@ -859,9 +973,11 @@
         if (!id) return;
         if (!window.confirm("هل تريد حذف هذه الحركة؟")) return;
         if (kind === "expense") {
+            const deleted = state.expenses.find((item) => item.id === id); if (deleted) moveToTrash("expense", deleted);
             state.expenses = state.expenses.filter((item) => item.id !== id);
             if (editingExpenseId === id) resetExpenseForm();
         } else {
+            const deleted = state.incomes.find((item) => item.id === id); if (deleted) moveToTrash("income", deleted);
             state.incomes = state.incomes.filter((item) => item.id !== id);
             if (editingIncomeId === id) resetIncomeForm();
         }
@@ -873,6 +989,7 @@
     function deleteDebt(id) {
         if (!id) return;
         if (!window.confirm("هل تريد حذف حركة الدين هذه؟")) return;
+        const deleted = state.debts.find((item) => item.id === id); if (deleted) moveToTrash("debt", deleted);
         state.debts = state.debts.filter((item) => item.id !== id);
         if (editingDebtId === id) resetDebtForm();
         saveState();
@@ -940,17 +1057,25 @@
         toast("تم حذف الدفعة المجدولة.");
     }
 
-    function exportBackup() {
-        const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "personalaccounts-iphone-backup.json";
-        link.click();
-        URL.revokeObjectURL(url);
-        refs.backupStatus.textContent = "آخر نسخة: تم التصدير الآن.";
-        toast("تم تصدير نسخة JSON.");
+    async function exportBackup() {
+        const password = value("backupPassword");
+        if (password.length < 6) { toast("أدخل كلمة مرور من 6 أحرف على الأقل."); return; }
+        const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+        const key = await deriveBackupKey(password, salt);
+        const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(JSON.stringify(state)));
+        const payload = { format: "PersonalAccountsEncryptedBackup", version: 1, salt: bytesToBase64(salt), iv: bytesToBase64(iv), data: bytesToBase64(new Uint8Array(encrypted)) };
+        downloadText("حساباتي-الشخصية.paenc", JSON.stringify(payload), "application/json");
+        state.lastBackupAt = new Date().toISOString();
+        saveState(); render(); toast("تم تصدير نسخة مشفرة.");
     }
+
+    async function deriveBackupKey(password, salt) {
+        const material = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+        return crypto.subtle.deriveKey({ name: "PBKDF2", salt, iterations: 250000, hash: "SHA-256" }, material, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]);
+    }
+
+    function bytesToBase64(bytes) { let text = ""; bytes.forEach((byte) => text += String.fromCharCode(byte)); return btoa(text); }
+    function base64ToBytes(text) { return Uint8Array.from(atob(text), (char) => char.charCodeAt(0)); }
 
     function downloadText(filename, content, type) {
         const blob = new Blob([content], { type });
@@ -1056,16 +1181,25 @@
         const file = event.target.files && event.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = function () {
+        reader.onload = async function () {
             try {
-                const data = JSON.parse(String(reader.result || "{}"));
+                await saveRecoverySnapshot();
+                const parsed = JSON.parse(String(reader.result || "{}"));
+                let data = parsed;
+                if (parsed.format === "PersonalAccountsEncryptedBackup") {
+                    const password = value("backupPassword");
+                    if (!password) throw new Error("missing password");
+                    const key = await deriveBackupKey(password, base64ToBytes(parsed.salt));
+                    const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv: base64ToBytes(parsed.iv) }, key, base64ToBytes(parsed.data));
+                    data = JSON.parse(new TextDecoder().decode(decrypted));
+                }
                 Object.assign(state, normalizeState(data));
                 saveState();
-                unlocked = !state.profile.passcode || !state.profile.safeMode;
+                unlocked = !hasPasscode() || !state.profile.safeMode;
                 toast("تم استيراد النسخة.");
                 render();
             } catch {
-                toast("تعذر قراءة النسخة.");
+                toast("تعذر قراءة النسخة أو كلمة المرور غير صحيحة.");
             }
         };
         reader.readAsText(file);
@@ -1075,6 +1209,7 @@
     function resetDevice() {
         if (!window.confirm("سيتم حذف كل بيانات هذا الجهاز المحلي. هل تريد المتابعة؟")) return;
         localStorage.removeItem(STORAGE_KEY);
+        indexedDB.deleteDatabase(DB_NAME);
         Object.assign(state, normalizeState(DEFAULT_STATE));
         unlocked = true;
         seedDates();
@@ -1095,12 +1230,12 @@
         setValue("profileCurrency", normalizeCurrency(state.profile.currency || "₪"));
         setValue("profileBudget", state.profile.monthlyBudget || "");
         setValue("profileSavingGoal", state.profile.savingGoal || "");
-        setValue("profilePasscode", state.profile.passcode || "");
+        setValue("profilePasscode", "");
         refs.safeModeToggle.textContent = state.profile.safeMode ? "إيقاف الوضع الآمن" : "وضع آمن";
         refs.hideNumbersToggle.textContent = hidden ? "إظهار الأرقام" : "إخفاء الأرقام";
         refs.showArchivedPeopleToggle.checked = showArchivedPeople;
-        refs.appMain.hidden = state.profile.safeMode && !!state.profile.passcode && !unlocked;
-        refs.privacyScreen.hidden = !state.profile.safeMode || !state.profile.passcode || unlocked;
+        refs.appMain.hidden = state.profile.safeMode && hasPasscode() && !unlocked;
+        refs.privacyScreen.hidden = !state.profile.safeMode || !hasPasscode() || unlocked;
         const activePanel = document.querySelector(".panel.is-active")?.getAttribute("data-panel") || "home";
         if (refs.homeHero) refs.homeHero.hidden = activePanel !== "home";
         if (refs.homeQuickActions) refs.homeQuickActions.hidden = activePanel !== "home";
@@ -1194,6 +1329,11 @@
         renderCategoryAccounts();
         renderCycleChart(currency, hidden);
         renderAccountBalances(currency, hidden);
+        renderCycleDetails(currency, hidden);
+        renderRecurring();
+        renderTrash();
+        renderAdvancedInsights(currency, hidden);
+        showBackupReminder();
         notifyDueItems();
     }
 
@@ -1206,6 +1346,11 @@
         };
         fill("expenseAccount", state.profile.accounts);
         fill("incomeAccount", state.profile.accounts);
+        ["debtAccount", "debtPlanAccount", "transferFrom", "transferTo", "balanceAccount", "recurringAccount"].forEach((id) => fill(id, state.profile.accounts));
+        const filter = document.getElementById("moneyAccountFilter");
+        const filterValue = filter.value;
+        filter.innerHTML = `<option value="">كل الحسابات</option>${state.profile.accounts.map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("")}`;
+        filter.value = filterValue;
         ["expenseCategory", "incomeCategory"].forEach((id) => {
             const select = document.getElementById(id);
             const current = select.value;
@@ -1222,11 +1367,85 @@
 
     function renderAccountBalances(currency, hidden) {
         refs.accountBalances.innerHTML = state.profile.accounts.map((account) => {
-            const income = sumByCurrency(state.incomes.filter((item) => (item.account || "نقدي") === account), "amount");
-            const expense = sumByCurrency(state.expenses.filter((item) => (item.account || "نقدي") === account), "amount");
-            const balance = subtractTotals(income, expense);
+            const currencies = Array.from(new Set([currency, ...state.incomes.map(entryCurrency), ...state.expenses.map(entryCurrency), ...state.debts.map(entryCurrency), ...state.transfers.map(entryCurrency)]));
+            const balance = currencies.reduce((totals, code) => addToTotals(totals, code, accountBalance(account, code)), {});
             return listItemMarkup(account, "الدخل ناقص المصروف", hidden ? "••••" : formatTotals(balance, currency), amountForCurrency(balance, currency) >= 0 ? "tone-income" : "tone-expense");
         }).join("") || emptyState("لا توجد حسابات بعد.");
+    }
+
+    function accountBalance(account, currency) {
+        const cash = buildCashFlowRows();
+        const incomingRows = state.incomes.concat(cash.debtCashInRows);
+        const outgoingRows = state.expenses.concat(cash.debtCashOutRows, cash.paidInstallmentCashRows);
+        const incoming = incomingRows.filter((item) => (item.account || "نقدي") === account && entryCurrency(item) === currency).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const outgoing = outgoingRows.filter((item) => (item.account || "نقدي") === account && entryCurrency(item) === currency).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const transfersIn = state.transfers.filter((item) => item.to === account && entryCurrency(item) === currency).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        const transfersOut = state.transfers.filter((item) => item.from === account && entryCurrency(item) === currency).reduce((sum, item) => sum + Number(item.amount || 0), 0);
+        return incoming - outgoing + transfersIn - transfersOut;
+    }
+
+    function renderCycleDetails(currency, hidden) {
+        const cycle = currentSalaryCycle();
+        const start = new Date(`${cycle.start}T12:00:00`), today = new Date();
+        const elapsed = Math.max(1, Math.floor((today - start) / 86400000) + 1);
+        const expenses = amountForCurrency(sumByCurrency(monthItems(state.expenses), "amount"), currency);
+        const budget = Number(state.profile.monthlyBudget || 0), remainingBudget = Math.max(0, budget - expenses);
+        const estimatedDays = cycle.end ? Math.max(1, daysUntil(cycle.end)) : Math.max(1, 30 - elapsed);
+        const previous = previousSalaryCycle();
+        const previousNet = amountForCurrency(subtractTotals(sumByCurrency(state.incomes.filter((i) => isDateInCycle(i.date, previous)), "amount"), sumByCurrency(state.expenses.filter((i) => isDateInCycle(i.date, previous)), "amount")), currency);
+        refs.cycleDetails.innerHTML = [summaryPill("أيام الدورة", String(elapsed)), summaryPill("متوسط الصرف اليومي", hidden ? "••••" : formatMoney(expenses / elapsed, currency)), summaryPill("المتاح يوميًا", hidden || !budget ? "—" : formatMoney(remainingBudget / estimatedDays, currency)), summaryPill("مرحل سابقًا", hidden ? "••••" : formatMoney(previousNet, currency))].join("");
+    }
+
+    function renderRecurring() {
+        refs.recurringList.innerHTML = state.recurringEntries.length ? state.recurringEntries.map((item) => `<div class="list-item"><div><div class="list-title">${escapeHtml(item.title)}</div><div class="list-meta">${item.kind === "income" ? "دخل" : "مصروف"} · ${escapeHtml(displayDate(item.nextDate))} · ${escapeHtml(item.account)}</div></div><div class="list-actions"><div class="list-value">${escapeHtml(formatMoney(item.amount, item.currency))}</div><button class="inline-button success" data-apply-recurring="${escapeHtml(item.id)}">تأكيد</button><button class="inline-button danger" data-delete-recurring="${escapeHtml(item.id)}">حذف</button></div></div>`).join("") : emptyState("لا توجد حركات متكررة.");
+        refs.recurringList.querySelectorAll("[data-apply-recurring]").forEach((button) => button.addEventListener("click", () => applyRecurring(button.dataset.applyRecurring)));
+        refs.recurringList.querySelectorAll("[data-delete-recurring]").forEach((button) => button.addEventListener("click", () => deleteRecurring(button.dataset.deleteRecurring)));
+    }
+
+    function moveToTrash(kind, item) {
+        state.trash.unshift({ id: crypto.randomUUID(), kind, item: JSON.parse(JSON.stringify(item)), deletedAt: new Date().toISOString() });
+    }
+
+    function renderTrash() {
+        const cutoff = Date.now() - 30 * 86400000;
+        state.trash = state.trash.filter((row) => new Date(row.deletedAt).getTime() >= cutoff);
+        refs.trashList.innerHTML = state.trash.length ? state.trash.map((row) => `<div class="list-item"><div><div class="list-title">${escapeHtml(row.item.title || row.item.name || row.item.person || "عنصر محذوف")}</div><div class="list-meta">${escapeHtml(row.kind)} · ${escapeHtml(displayDate(row.deletedAt))}</div></div><button class="inline-button success" data-restore-trash="${escapeHtml(row.id)}">استعادة</button></div>`).join("") : emptyState("سلة المحذوفات فارغة.");
+        refs.trashList.querySelectorAll("[data-restore-trash]").forEach((button) => button.addEventListener("click", () => restoreTrash(button.dataset.restoreTrash)));
+    }
+
+    function restoreTrash(id) {
+        const row = state.trash.find((item) => item.id === id); if (!row) return;
+        const targets = { income: state.incomes, expense: state.expenses, debt: state.debts, commitment: state.commitments, reminder: state.reminders, recurring: state.recurringEntries };
+        if (targets[row.kind]) targets[row.kind].unshift(row.item);
+        state.trash = state.trash.filter((item) => item.id !== id);
+        saveState(); render(); toast("تمت استعادة العنصر.");
+    }
+
+    function renderAudit() {
+        const issues = [];
+        [...state.incomes, ...state.expenses].forEach((item) => {
+            if (!(Number(item.amount) > 0)) issues.push(`مبلغ غير صحيح: ${item.title || "حركة"}`);
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(String(item.date || ""))) issues.push(`تاريخ غير صحيح: ${item.title || "حركة"}`);
+            if (!state.profile.accounts.includes(item.account || "نقدي")) issues.push(`حساب غير موجود: ${item.account}`);
+        });
+        const duplicateIds = [...state.incomes, ...state.expenses, ...state.debts].map((x)=>x.id).filter((id,i,a)=>a.indexOf(id)!==i);
+        if (duplicateIds.length) issues.push(`${duplicateIds.length} معرف مكرر.`);
+        refs.auditResults.innerHTML = issues.length ? issues.map((text) => listItemMarkup("يحتاج مراجعة", text, "!", "tone-expense")).join("") : listItemMarkup("البيانات سليمة", "لم نجد مبالغ أو تواريخ أو حسابات غير منطقية.", "✓", "tone-income");
+    }
+
+    function showBackupReminder() {
+        const last = state.lastBackupAt ? new Date(state.lastBackupAt).getTime() : 0;
+        const days = last ? Math.floor((Date.now() - last) / 86400000) : 999;
+        refs.backupStatus.textContent = last ? `آخر نسخة: ${displayDate(state.lastBackupAt)}${days >= 7 ? " · حان موعد نسخة جديدة" : ""}` : "لم تحفظ نسخة بعد؛ احفظ نسخة مشفرة الآن.";
+    }
+
+    function renderAdvancedInsights(currency, hidden) {
+        const expenses = monthItems(state.expenses).filter((item) => entryCurrency(item) === currency);
+        const grouped = expenses.reduce((map, item) => { const key = item.category || item.title; map[key] = (map[key] || 0) + Number(item.amount || 0); return map; }, {});
+        const top = Object.entries(grouped).sort((a,b) => b[1]-a[1]).slice(0,3);
+        const income = amountForCurrency(sumByCurrency(monthItems(state.incomes), "amount"), currency);
+        const debt = Math.abs(amountForCurrency(debtNetByCurrency(state.debts), currency));
+        refs.advancedInsights.innerHTML = [listItemMarkup("أعلى 3 تصنيفات", top.map(([name]) => name).join(" · ") || "لا توجد بيانات", hidden ? "••••" : formatMoney(top.reduce((s,x)=>s+x[1],0), currency), "tone-warning"), listItemMarkup("نسبة الديون إلى دخل الدورة", "كلما انخفضت كان الوضع أفضل", income > 0 ? `${Math.round(debt / income * 100)}%` : "—", debt <= income ? "tone-income" : "tone-expense")].join("");
     }
 
     function renderCycleChart(currency, hidden) {
@@ -1270,11 +1489,13 @@
                 date: item.paidAt || item.dueDate,
                 createdAt: item.paidAt || item.dueDate
             }));
+        const transferRows = state.transfers.map((item) => ({ ...item, kind: "transfer", sourceKind: "transfer", title: `تحويل من ${item.from} إلى ${item.to}`, category: "تحويل داخلي", account: item.from }));
 
         const recent = state.expenses.map((x) => ({ kind: "expense", sourceKind: "expense", sourceId: x.id, ...x }))
             .concat(state.incomes.map((x) => ({ kind: "income", sourceKind: "income", sourceId: x.id, ...x })))
             .concat(debtCashRows)
             .concat(installmentPaidRows)
+            .concat(transferRows)
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 8);
 
@@ -1283,7 +1504,7 @@
                 hidden ? "حركة مخفية" : item.title,
                 hidden ? "التفاصيل مخفية في الوضع الآمن." : operationMetaText(item),
                 hidden ? "••••" : formatMoney(item.amount, entryCurrency(item)),
-                item.kind === "expense" ? "tone-expense" : "tone-income",
+                item.kind === "expense" ? "tone-expense" : item.kind === "income" ? "tone-income" : "tone-warning",
                 "",
                 !hidden
             )).join("")
@@ -1293,6 +1514,7 @@
             .concat(state.incomes.map((x) => ({ kind: "income", sourceKind: "income", sourceId: x.id, ...x })))
             .concat(debtCashRows)
             .concat(installmentPaidRows)
+            .concat(transferRows)
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         if (currentLogFilter !== "all") {
             moneyLog = moneyLog.filter((item) => item.kind === currentLogFilter);
@@ -1311,7 +1533,7 @@
                 hidden ? "حركة مخفية" : item.title,
                 hidden ? "التفاصيل مخفية في الوضع الآمن." : operationMetaText(item),
                 hidden ? "••••" : formatMoney(item.amount, entryCurrency(item)),
-                item.kind === "expense" ? "tone-expense" : "tone-income",
+                item.kind === "expense" ? "tone-expense" : item.kind === "income" ? "tone-income" : "tone-warning",
                 operationActionsMarkup(item),
                 !hidden
             )).join("")
@@ -1377,10 +1599,12 @@
         if (item.sourceKind === "installment-payment") {
             return "دفعة دين مجدولة";
         }
+        if (item.sourceKind === "transfer") return "تحويل داخلي";
         return item.kind === "expense" ? "مصروف" : "دخل";
     }
 
     function operationActionsMarkup(item) {
+        if (item.sourceKind === "transfer") return "";
         if (item.sourceKind === "debt-payment") {
             return `
                 <button class="inline-button neutral" type="button" data-edit-debt-from-log="${escapeHtml(item.sourceId)}">تعديل</button>
@@ -1413,6 +1637,10 @@
     }
 
     function matchesMoneyPeriod(item) {
+        if (moneyDateFrom && String(item.date || "") < moneyDateFrom) return false;
+        if (moneyDateTo && String(item.date || "") > moneyDateTo) return false;
+        if (moneyAccountFilter && String(item.account || "نقدي") !== moneyAccountFilter) return false;
+        if (moneyCurrencyFilter && entryCurrency(item) !== normalizeCurrency(moneyCurrencyFilter)) return false;
         if (currentMoneyPeriod === "all") return true;
         const target = new Date(item.date);
         const today = new Date();
@@ -1674,6 +1902,7 @@
         refs.commitmentEntries.querySelectorAll("[data-delete-id]").forEach((button) => {
             button.addEventListener("click", () => {
                 const id = button.getAttribute("data-delete-id");
+                const deleted = state.commitments.find((item) => item.id === id); if (deleted) moveToTrash("commitment", deleted);
                 state.commitments = state.commitments.filter((item) => item.id !== id);
                 saveState();
                 toast("تم حذف الالتزام.");
@@ -1719,6 +1948,7 @@
         refs.reminderEntries.querySelectorAll("[data-reminder-delete]").forEach((button) => {
             button.addEventListener("click", () => {
                 const id = button.getAttribute("data-reminder-delete");
+                const deleted = state.reminders.find((item) => item.id === id); if (deleted) moveToTrash("reminder", deleted);
                 state.reminders = state.reminders.filter((item) => item.id !== id);
                 saveState();
                 render();
@@ -2194,6 +2424,7 @@
                 planId: plan.id,
                 person: plan.person,
                 currency: normalizeCurrency(plan.currency || state.profile.currency || "₪"),
+                account: plan.account || "نقدي",
                 installmentId: installment.id,
                 amount: Number(installment.amount || 0),
                 dueDate: installment.dueDate,
@@ -2657,6 +2888,7 @@
                 monthlyBudget: Number(data.profile?.monthlyBudget || 0),
                 savingGoal: Number(data.profile?.savingGoal || 0),
                 passcode: String(data.profile?.passcode || ""),
+                passcodeHash: String(data.profile?.passcodeHash || ""),
                 safeMode: !!data.profile?.safeMode,
                 hideNumbers: !!data.profile?.hideNumbers,
                 categories: Array.isArray(data.profile?.categories) && data.profile.categories.length ? data.profile.categories.map(String) : DEFAULT_STATE.profile.categories.slice(),
@@ -2668,6 +2900,7 @@
             debtPlans: Array.isArray(data.debtPlans) ? data.debtPlans.map((plan) => ({
                 ...plan,
                 currency: normalizeCurrency(plan.currency || defaultCurrency),
+                account: String(plan.account || "نقدي"),
                 installments: Array.isArray(plan.installments)
                     ? plan.installments.map((installment) => ({ ...installment }))
                     : []
@@ -2676,6 +2909,10 @@
             reminders: Array.isArray(data.reminders) ? data.reminders : [],
             archivedPeople: Array.isArray(data.archivedPeople) ? data.archivedPeople : [],
             peopleDetails: data.peopleDetails && typeof data.peopleDetails === "object" ? data.peopleDetails : {},
+            transfers: Array.isArray(data.transfers) ? data.transfers.map((item) => ({ ...item, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
+            recurringEntries: Array.isArray(data.recurringEntries) ? data.recurringEntries : [],
+            trash: Array.isArray(data.trash) ? data.trash : [],
+            lastBackupAt: String(data.lastBackupAt || ""),
             monthlyArchives: Array.isArray(data.monthlyArchives) ? data.monthlyArchives.map((item) => ({
                 ...item,
                 currency: normalizeCurrency(item.currency || defaultCurrency),
@@ -2687,11 +2924,52 @@
     }
 
     function saveState() {
+        const nextSnapshot = JSON.stringify(state);
+        if (!suppressUndo && lastPersistedSnapshot !== nextSnapshot) undoSnapshot = lastPersistedSnapshot;
+        lastPersistedSnapshot = nextSnapshot;
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            const lightweight = JSON.parse(nextSnapshot);
+            [...lightweight.incomes, ...lightweight.expenses].forEach((item) => { item.receipt = ""; });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(lightweight));
         } catch {
             window.setTimeout(() => toast("تعذر الحفظ: مساحة المتصفح ممتلئة. صدّر نسخة احتياطية واحذف بعض صور الفواتير."), 0);
         }
+        saveToDatabase(JSON.parse(nextSnapshot));
+    }
+
+    function undoLastChange() {
+        if (!undoSnapshot) { toast("لا يوجد تعديل سابق للتراجع عنه."); return; }
+        const current = JSON.stringify(state);
+        suppressUndo = true;
+        Object.assign(state, normalizeState(JSON.parse(undoSnapshot)));
+        undoSnapshot = current;
+        saveState(); suppressUndo = false; render(); toast("تم التراجع عن آخر تعديل.");
+    }
+
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, 1);
+            request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains("data")) db.createObjectStore("data"); if (!db.objectStoreNames.contains("snapshots")) db.createObjectStore("snapshots", { autoIncrement: true }); };
+            request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+        });
+    }
+
+    async function saveToDatabase(data) {
+        try { const db = await openDatabase(); const tx = db.transaction("data", "readwrite"); tx.objectStore("data").put(data, "state"); } catch { /* local fallback remains available */ }
+    }
+
+    async function hydrateFromDatabase() {
+        try {
+            const db = await openDatabase(); const tx = db.transaction("data", "readonly"); const request = tx.objectStore("data").get("state");
+            request.onsuccess = () => {
+                if (request.result) { Object.assign(state, normalizeState(request.result)); lastPersistedSnapshot = JSON.stringify(state); migrateLegacyPasscode(); seedDates(); render(); }
+                else saveState();
+            };
+        } catch { /* use migrated localStorage state */ }
+    }
+
+    async function saveRecoverySnapshot() {
+        try { const db = await openDatabase(); const tx = db.transaction("snapshots", "readwrite"); tx.objectStore("snapshots").add({ createdAt: new Date().toISOString(), data: JSON.parse(JSON.stringify(state)) }); } catch { /* import can still continue */ }
     }
 
     function toast(message) {
@@ -2713,4 +2991,12 @@
     bind();
     seedDates();
     render();
+    hydrateFromDatabase();
+    migrateLegacyPasscode();
+    if (navigator.storage?.persist) navigator.storage.persist();
+    resetIdleLock();
+    if (localStorage.getItem("personalaccounts.app.version") !== APP_VERSION) {
+        refs.updateBanner.hidden = false;
+        localStorage.setItem("personalaccounts.app.version", APP_VERSION);
+    }
 })();
