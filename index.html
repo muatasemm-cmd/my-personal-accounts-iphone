@@ -11,7 +11,7 @@
     <link rel="icon" href="./favicon.ico" />
     <link rel="apple-touch-icon" href="./favicon.ico" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=28" />
+    <link rel="stylesheet" href="./app.css?v=29" />
 </head>
 <body>
 <div class="app-shell" id="appShell">
@@ -32,7 +32,7 @@
             <header class="topbar">
                 <div>
                     <p class="eyebrow">نسخة آيفون أولية</p>
-                    <p class="version-badge">الإصدار v28 | دورة الراتب المرنة</p>
+                    <p class="version-badge">الإصدار v29 | مزايا نسخة الآيفون</p>
                     <h1>حساباتي</h1>
                     <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
                 </div>
@@ -214,13 +214,17 @@
                                 <option value="₪">شيكل ₪</option>
                                 <option value="JD">دينار JD</option>
                                 <option value="$">دولار $</option>
+                                <option value="€">يورو €</option>
                             </select>
                         </label>
+                        <label class="field"><span>الحساب / المحفظة</span><select id="expenseAccount" class="input"></select></label>
                     </div>
                     <label class="field">
                         <span>ملاحظة</span>
                         <input id="expenseNote" class="input" type="text" placeholder="بيض + خبز + لبن، أو أي تفصيل إضافي" />
                     </label>
+                    <label class="field"><span>صورة الفاتورة (اختياري)</span><input id="expenseReceipt" class="input" type="file" accept="image/*" capture="environment" /><small id="expenseReceiptStatus">لا توجد صورة.</small></label>
+                    <button class="button button-outline" id="clearExpenseReceipt" type="button">حذف صورة الفاتورة</button>
                     <div class="form-actions">
                         <button class="button button-danger" id="expenseSubmitButton" type="submit">حفظ المصروف</button>
                         <button class="button button-outline" id="expenseCancelEditButton" type="button" hidden>إلغاء التعديل</button>
@@ -260,13 +264,17 @@
                                 <option value="₪">شيكل ₪</option>
                                 <option value="JD">دينار JD</option>
                                 <option value="$">دولار $</option>
+                                <option value="€">يورو €</option>
                             </select>
                         </label>
+                        <label class="field"><span>الحساب / المحفظة</span><select id="incomeAccount" class="input"></select></label>
                     </div>
                     <label class="field">
                         <span>ملاحظة</span>
                         <input id="incomeNote" class="input" type="text" placeholder="اختياري" />
                     </label>
+                    <label class="field"><span>صورة الإثبات (اختياري)</span><input id="incomeReceipt" class="input" type="file" accept="image/*" capture="environment" /><small id="incomeReceiptStatus">لا توجد صورة.</small></label>
+                    <button class="button button-outline" id="clearIncomeReceipt" type="button">حذف صورة الإثبات</button>
                     <div class="form-actions">
                         <button class="button button-primary" id="incomeSubmitButton" type="submit">حفظ الدخل</button>
                         <button class="button button-outline" id="incomeCancelEditButton" type="button" hidden>إلغاء التعديل</button>
@@ -309,6 +317,7 @@
                             <span>اسم الشخص</span>
                             <input id="debtPerson" class="input" type="text" placeholder="مثال: أحمد" list="peopleSuggestions" required />
                         </label>
+                        <label class="field"><span>رقم الهاتف (اختياري)</span><input id="debtPhone" class="input" type="tel" placeholder="05xxxxxxxx" /></label>
                         <label class="field">
                             <span>نوع الحركة</span>
                             <select id="debtType" class="input">
@@ -334,6 +343,7 @@
                                 <option value="₪">شيكل ₪</option>
                                 <option value="JD">دينار JD</option>
                                 <option value="$">دولار $</option>
+                                <option value="€">يورو €</option>
                             </select>
                         </label>
                     </div>
@@ -492,6 +502,17 @@
                     <button class="button button-primary" type="submit">حفظ الخطة والإعدادات</button>
                 </form>
 
+                <div class="card-form">
+                    <div class="section-head compact"><h4>التصنيفات والحسابات</h4><p>أضف تصنيفات ومحافظ مثل نقدي، بنك، أو بطاقة.</p></div>
+                    <div class="field-grid">
+                        <label class="field"><span>تصنيف جديد</span><input id="newCategoryInput" class="input" type="text" placeholder="مثال: صيانة" /></label>
+                        <button class="button button-outline" id="addCategoryButton" type="button">إضافة التصنيف</button>
+                        <label class="field"><span>حساب / محفظة جديدة</span><input id="newAccountInput" class="input" type="text" placeholder="مثال: البنك" /></label>
+                        <button class="button button-outline" id="addAccountButton" type="button">إضافة الحساب</button>
+                    </div>
+                    <div id="categoryAccountList" class="list-stack"></div>
+                </div>
+
                 <form class="card-form" id="commitmentForm">
                     <div class="field-grid">
                         <label class="field">
@@ -508,6 +529,7 @@
                                 <option value="₪">شيكل ₪</option>
                                 <option value="JD">دينار JD</option>
                                 <option value="$">دولار $</option>
+                                <option value="€">يورو €</option>
                             </select>
                         </label>
                     </div>
@@ -521,6 +543,7 @@
                             <input id="commitmentNote" class="input" type="text" placeholder="اختياري" />
                         </label>
                     </div>
+                    <label class="toggle-row"><input id="commitmentRecurring" type="checkbox" /><span>يتكرر شهريًا تلقائيًا بعد الدفع</span></label>
                     <div class="form-actions">
                         <button class="button button-warning" id="commitmentSubmitButton" type="submit">حفظ الالتزام</button>
                         <button class="button button-outline" id="commitmentCancelEditButton" type="button" hidden>إلغاء التعديل</button>
@@ -543,6 +566,9 @@
 
                 <div class="card-form">
                     <button class="button button-primary" id="exportBackupButton" type="button">تصدير نسخة JSON</button>
+                    <button class="button button-outline" id="exportCsvButton" type="button">تصدير Excel (CSV)</button>
+                    <button class="button button-outline" id="exportPdfButton" type="button">تصدير / طباعة PDF</button>
+                    <button class="button button-outline" id="enableNotificationsButton" type="button">تفعيل تنبيهات الاستحقاق</button>
                     <label class="button button-outline file-button">
                         استيراد نسخة
                         <input id="importBackupInput" type="file" accept="application/json" hidden />
@@ -589,6 +615,15 @@
                 <div class="section-head">
                     <h3>التقارير</h3>
                     <p>تقرير دورة الراتب، المقارنة، كشف أين ذهب الصرف، وأرشفة الدورات السابقة.</p>
+                </div>
+                <div class="list-card">
+                    <div class="section-head compact"><h4>مقارنة آخر 6 دورات راتب</h4><p>الدخل والمصروف لكل دورة.</p></div>
+                    <div id="cycleChart" class="cycle-chart"></div>
+                </div>
+
+                <div class="list-card">
+                    <div class="section-head compact"><h4>أرصدة الحسابات والمحافظ</h4></div>
+                    <div id="accountBalances" class="list-stack"></div>
                 </div>
                 <div class="list-card">
                     <div class="section-head compact">
@@ -682,7 +717,7 @@
 
         <div class="toast" id="toastMessage" hidden></div>
     </div>
-<script src="./app.js?v=28"></script>
+<script src="./app.js?v=29"></script>
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));

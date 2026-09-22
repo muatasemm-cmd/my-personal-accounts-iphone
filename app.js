@@ -9,6 +9,8 @@
             passcode: "",
             safeMode: false,
             hideNumbers: false
+            ,categories: ["عام", "راتب", "طعام", "بيت", "سيارة", "علاج", "فواتير", "متفرقات"]
+            ,accounts: ["نقدي"]
         },
         incomes: [],
         expenses: [],
@@ -17,6 +19,7 @@
         commitments: [],
         reminders: [],
         archivedPeople: [],
+        peopleDetails: {},
         monthlyArchives: []
     };
 
@@ -66,6 +69,9 @@
         damageReportList: document.getElementById("damageReportList"),
         archiveMonthButton: document.getElementById("archiveMonthButton"),
         monthlyArchivesList: document.getElementById("monthlyArchivesList"),
+        cycleChart: document.getElementById("cycleChart"),
+        accountBalances: document.getElementById("accountBalances"),
+        categoryAccountList: document.getElementById("categoryAccountList"),
         setupHelper: document.getElementById("setupHelper"),
         toast: document.getElementById("toastMessage"),
         homeHero: document.getElementById("homeHero"),
@@ -120,6 +126,8 @@
     let editingInstallmentPlanId = "";
     let editingInstallmentId = "";
     let activeNumericInputId = "";
+    let pendingExpenseReceipt = "";
+    let pendingIncomeReceipt = "";
 
     function bind() {
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
@@ -160,6 +168,15 @@
         document.getElementById("planForm").addEventListener("submit", onPlanSubmit);
         document.getElementById("reminderForm").addEventListener("submit", onReminderSubmit);
         document.getElementById("exportBackupButton").addEventListener("click", exportBackup);
+        document.getElementById("exportCsvButton").addEventListener("click", exportCsv);
+        document.getElementById("exportPdfButton").addEventListener("click", exportPdf);
+        document.getElementById("enableNotificationsButton").addEventListener("click", enableNotifications);
+        document.getElementById("addCategoryButton").addEventListener("click", addCategory);
+        document.getElementById("addAccountButton").addEventListener("click", addAccount);
+        document.getElementById("expenseReceipt").addEventListener("change", (event) => loadReceipt(event, "expense"));
+        document.getElementById("incomeReceipt").addEventListener("change", (event) => loadReceipt(event, "income"));
+        document.getElementById("clearExpenseReceipt").addEventListener("click", () => clearReceipt("expense"));
+        document.getElementById("clearIncomeReceipt").addEventListener("click", () => clearReceipt("income"));
         document.getElementById("importBackupInput").addEventListener("change", importBackup);
         document.getElementById("resetDeviceButton").addEventListener("click", resetDevice);
         document.getElementById("lockDeviceButton").addEventListener("click", lockNow);
@@ -339,8 +356,12 @@
             date: value("expenseDate"),
             currency: normalizeCurrency(value("expenseCurrency") || state.profile.currency || "₪"),
             category: finalCategory,
-            note: value("expenseNote")
+            note: value("expenseNote"),
+            account: value("expenseAccount") || "نقدي",
+            receipt: pendingExpenseReceipt
         };
+        if (payload.amount <= 0) { toast("أدخل مبلغًا أكبر من صفر."); return; }
+        rememberCategory(finalCategory);
         if (editingExpenseId) {
             state.expenses = state.expenses.map((item) =>
                 item.id === editingExpenseId ? { ...item, ...payload } : item
@@ -374,8 +395,12 @@
             date: value("incomeDate"),
             currency: normalizeCurrency(value("incomeCurrency") || state.profile.currency || "₪"),
             category: finalCategory,
-            note: value("incomeNote")
+            note: value("incomeNote"),
+            account: value("incomeAccount") || "نقدي",
+            receipt: pendingIncomeReceipt
         };
+        if (payload.amount <= 0) { toast("أدخل مبلغًا أكبر من صفر."); return; }
+        rememberCategory(finalCategory);
         if (editingIncomeId) {
             state.incomes = state.incomes.map((item) =>
                 item.id === editingIncomeId ? { ...item, ...payload } : item
@@ -404,6 +429,9 @@
             currency: normalizeCurrency(value("debtCurrency") || state.profile.currency || "₪"),
             note: value("debtNote")
         };
+        if (payload.amount <= 0) { toast("أدخل مبلغًا أكبر من صفر."); return; }
+        const phone = value("debtPhone");
+        if (phone) state.peopleDetails[payload.person] = { ...(state.peopleDetails[payload.person] || {}), phone };
         if (editingDebtId) {
             state.debts = state.debts.map((item) =>
                 item.id === editingDebtId ? { ...item, ...payload } : item
@@ -429,8 +457,10 @@
             amount: amount("commitmentAmount"),
             dueDate: value("commitmentDate"),
             currency: normalizeCurrency(value("commitmentCurrency") || state.profile.currency || "₪"),
-            note: value("commitmentNote")
+            note: value("commitmentNote"),
+            recurring: !!document.getElementById("commitmentRecurring").checked
         };
+        if (payload.amount <= 0) { toast("أدخل مبلغًا أكبر من صفر."); return; }
         if (editingCommitmentId) {
             state.commitments = state.commitments.map((item) =>
                 item.id === editingCommitmentId ? { ...item, ...payload } : item
@@ -629,7 +659,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v27.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v29.");
     }
 
     function startSetup() {
@@ -651,21 +681,27 @@
 
     function resetExpenseForm() {
         editingExpenseId = "";
+        pendingExpenseReceipt = "";
         document.getElementById("expenseForm").reset();
         seedDates();
         setValue("expenseCategory", "");
         setValue("expenseCustomCategory", "");
         setValue("expenseCurrency", normalizeCurrency(state.profile.currency || "₪"));
+        setValue("expenseAccount", state.profile.accounts[0] || "نقدي");
+        document.getElementById("expenseReceiptStatus").textContent = "لا توجد صورة.";
         setFormEditing(refs.expenseSubmitButton, refs.expenseCancelEditButton, false, "حفظ التعديل", "حفظ المصروف");
     }
 
     function resetIncomeForm() {
         editingIncomeId = "";
+        pendingIncomeReceipt = "";
         document.getElementById("incomeForm").reset();
         seedDates();
         setValue("incomeCategory", "");
         setValue("incomeCustomCategory", "");
         setValue("incomeCurrency", normalizeCurrency(state.profile.currency || "₪"));
+        setValue("incomeAccount", state.profile.accounts[0] || "نقدي");
+        document.getElementById("incomeReceiptStatus").textContent = "لا توجد صورة.";
         setFormEditing(refs.incomeSubmitButton, refs.incomeCancelEditButton, false, "حفظ التعديل", "حفظ الدخل");
     }
 
@@ -710,6 +746,9 @@
             setValue("expenseAmount", item.amount);
             setValue("expenseDate", item.date);
             setValue("expenseCurrency", normalizeCurrency(item.currency || state.profile.currency || "₪"));
+            setValue("expenseAccount", item.account || "نقدي");
+            pendingExpenseReceipt = item.receipt || "";
+            document.getElementById("expenseReceiptStatus").textContent = pendingExpenseReceipt ? "صورة محفوظة؛ اختر صورة لتغييرها." : "لا توجد صورة.";
             const presetCategories = ["أكل", "بيت", "مدارس", "مواصلات", "علاج", "فواتير", "أولاد", "مجموعة أغراض", "متفرقات", "طوارئ"];
             const categoryValue = item.category || item.title || "";
             if (presetCategories.includes(categoryValue)) {
@@ -727,6 +766,9 @@
             setValue("incomeAmount", item.amount);
             setValue("incomeDate", item.date);
             setValue("incomeCurrency", normalizeCurrency(item.currency || state.profile.currency || "₪"));
+            setValue("incomeAccount", item.account || "نقدي");
+            pendingIncomeReceipt = item.receipt || "";
+            document.getElementById("incomeReceiptStatus").textContent = pendingIncomeReceipt ? "صورة محفوظة؛ اختر صورة لتغييرها." : "لا توجد صورة.";
             const presetCategories = ["راتب", "دخل إضافي", "تحويل", "هدية", "استرداد", "بيع", "متفرقات"];
             const categoryValue = item.category || item.title || "";
             if (presetCategories.includes(categoryValue)) {
@@ -753,6 +795,7 @@
         setValue("debtAmount", item.amount);
         setValue("debtDate", item.date);
         setValue("debtCurrency", normalizeCurrency(item.currency || state.profile.currency || "₪"));
+        setValue("debtPhone", state.peopleDetails[item.person]?.phone || "");
         setValue("debtNote", item.note || "");
         setFormEditing(refs.debtSubmitButton, refs.debtCancelEditButton, true, "حفظ التعديل", "حفظ الحركة");
         document.getElementById("debtPerson")?.focus();
@@ -793,6 +836,7 @@
         setValue("commitmentDate", item.dueDate);
         setValue("commitmentCurrency", normalizeCurrency(item.currency || state.profile.currency || "₪"));
         setValue("commitmentNote", item.note || "");
+        document.getElementById("commitmentRecurring").checked = !!item.recurring;
         setFormEditing(refs.commitmentSubmitButton, refs.commitmentCancelEditButton, true, "حفظ التعديل", "حفظ الالتزام");
         document.getElementById("commitmentName")?.focus();
         toast("عدّل الالتزام ثم احفظه.");
@@ -906,6 +950,106 @@
         URL.revokeObjectURL(url);
         refs.backupStatus.textContent = "آخر نسخة: تم التصدير الآن.";
         toast("تم تصدير نسخة JSON.");
+    }
+
+    function downloadText(filename, content, type) {
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 500);
+    }
+
+    function exportCsv() {
+        const quote = (text) => `"${String(text ?? "").replace(/"/g, '""')}"`;
+        const rows = [["النوع", "العنوان", "المبلغ", "العملة", "التاريخ", "التصنيف", "الحساب", "ملاحظات"]]
+            .concat(state.incomes.map((item) => ["دخل", item.title, item.amount, entryCurrency(item), item.date, item.category, item.account || "نقدي", item.note || ""]))
+            .concat(state.expenses.map((item) => ["مصروف", item.title, item.amount, entryCurrency(item), item.date, item.category, item.account || "نقدي", item.note || ""]));
+        downloadText("حساباتي-الشخصية.csv", `\uFEFF${rows.map((row) => row.map(quote).join(",")).join("\n")}`, "text/csv;charset=utf-8");
+        toast("تم تصدير ملف CSV.");
+    }
+
+    function exportPdf() {
+        switchPanel("reports");
+        toast("ستفتح شاشة الطباعة؛ اختر حفظ كملف PDF.");
+        window.setTimeout(() => window.print(), 300);
+    }
+
+    async function enableNotifications() {
+        if (!("Notification" in window)) { toast("التنبيهات غير مدعومة في هذا المتصفح."); return; }
+        const permission = await Notification.requestPermission();
+        toast(permission === "granted" ? "تم تفعيل التنبيهات." : "لم يتم السماح بالتنبيهات.");
+        if (permission === "granted") notifyDueItems();
+    }
+
+    function notifyDueItems() {
+        if (!("Notification" in window) || Notification.permission !== "granted") return;
+        const due = state.commitments.filter((item) => !item.isPaid && daysUntil(item.dueDate) >= 0 && daysUntil(item.dueDate) <= 1);
+        if (!due.length) return;
+        const key = `personalaccounts.notifications.${dateValue(new Date())}`;
+        if (sessionStorage.getItem(key)) return;
+        new Notification("استحقاق قريب في حساباتي", { body: `عندك ${due.length} التزام خلال اليوم أو غدًا.` });
+        sessionStorage.setItem(key, "1");
+    }
+
+    function addCategory() {
+        const input = document.getElementById("newCategoryInput");
+        const next = String(input.value || "").trim();
+        if (!next) return;
+        rememberCategory(next);
+        input.value = "";
+        saveState(); render(); toast("تمت إضافة التصنيف.");
+    }
+
+    function rememberCategory(category) {
+        if (!category || state.profile.categories.includes(category)) return;
+        state.profile.categories.push(category);
+    }
+
+    function addAccount() {
+        const input = document.getElementById("newAccountInput");
+        const next = String(input.value || "").trim();
+        if (!next || state.profile.accounts.includes(next)) return;
+        state.profile.accounts.push(next);
+        input.value = "";
+        saveState(); render(); toast("تمت إضافة الحساب.");
+    }
+
+    function loadReceipt(event, kind) {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) { toast("اختر ملف صورة."); return; }
+        const reader = new FileReader();
+        reader.onload = () => compressReceipt(String(reader.result || ""), (dataUrl) => {
+            if (kind === "expense") pendingExpenseReceipt = dataUrl;
+            else pendingIncomeReceipt = dataUrl;
+            document.getElementById(`${kind}ReceiptStatus`).textContent = "تم تجهيز الصورة للحفظ.";
+            toast("تم إرفاق الصورة.");
+        });
+        reader.readAsDataURL(file);
+    }
+
+    function clearReceipt(kind) {
+        if (kind === "expense") pendingExpenseReceipt = "";
+        else pendingIncomeReceipt = "";
+        document.getElementById(`${kind}Receipt`).value = "";
+        document.getElementById(`${kind}ReceiptStatus`).textContent = "لا توجد صورة.";
+        toast("تم حذف الصورة من الحركة الحالية.");
+    }
+
+    function compressReceipt(source, done) {
+        const image = new Image();
+        image.onload = () => {
+            const scale = Math.min(1, 900 / Math.max(image.width, image.height));
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.max(1, Math.round(image.width * scale));
+            canvas.height = Math.max(1, Math.round(image.height * scale));
+            canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+            done(canvas.toDataURL("image/jpeg", .6));
+        };
+        image.src = source;
     }
 
     function importBackup(event) {
@@ -1047,6 +1191,59 @@
         renderMonthComparison(currency, hidden);
         renderDamageReport(currency, hidden);
         renderMonthlyArchives(currency, hidden);
+        renderCategoryAccounts();
+        renderCycleChart(currency, hidden);
+        renderAccountBalances(currency, hidden);
+        notifyDueItems();
+    }
+
+    function renderCategoryAccounts() {
+        const fill = (id, values) => {
+            const select = document.getElementById(id);
+            const current = select.value;
+            select.innerHTML = values.map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
+            if (values.includes(current)) select.value = current;
+        };
+        fill("expenseAccount", state.profile.accounts);
+        fill("incomeAccount", state.profile.accounts);
+        ["expenseCategory", "incomeCategory"].forEach((id) => {
+            const select = document.getElementById(id);
+            const current = select.value;
+            const fixed = id === "incomeCategory" ? ["راتب", "دخل إضافي", "تحويل", "هدية", "استرداد", "بيع", "متفرقات"] : state.profile.categories;
+            const values = Array.from(new Set([""].concat(fixed, state.profile.categories)));
+            select.innerHTML = values.map((item) => `<option value="${escapeHtml(item)}">${escapeHtml(item || "اختر التصنيف...")}</option>`).join("");
+            if (values.includes(current)) select.value = current;
+        });
+        refs.categoryAccountList.innerHTML = [
+            listItemMarkup("التصنيفات", state.profile.categories.join(" · "), String(state.profile.categories.length), "tone-income"),
+            listItemMarkup("الحسابات والمحافظ", state.profile.accounts.join(" · "), String(state.profile.accounts.length), "tone-income")
+        ].join("");
+    }
+
+    function renderAccountBalances(currency, hidden) {
+        refs.accountBalances.innerHTML = state.profile.accounts.map((account) => {
+            const income = sumByCurrency(state.incomes.filter((item) => (item.account || "نقدي") === account), "amount");
+            const expense = sumByCurrency(state.expenses.filter((item) => (item.account || "نقدي") === account), "amount");
+            const balance = subtractTotals(income, expense);
+            return listItemMarkup(account, "الدخل ناقص المصروف", hidden ? "••••" : formatTotals(balance, currency), amountForCurrency(balance, currency) >= 0 ? "tone-income" : "tone-expense");
+        }).join("") || emptyState("لا توجد حسابات بعد.");
+    }
+
+    function renderCycleChart(currency, hidden) {
+        const cycles = salaryCycleHistory(6);
+        if (!cycles.length) { refs.cycleChart.innerHTML = emptyState("سجّل راتبين على الأقل لعرض مقارنة الدورات."); return; }
+        const rows = cycles.map((cycle) => {
+            const income = amountForCurrency(sumByCurrency(state.incomes.filter((item) => isDateInCycle(item.date, cycle)), "amount"), currency);
+            const expense = amountForCurrency(sumByCurrency(state.expenses.filter((item) => isDateInCycle(item.date, cycle)), "amount"), currency);
+            return { ...cycle, income, expense };
+        });
+        const max = Math.max(1, ...rows.flatMap((row) => [row.income, row.expense]));
+        refs.cycleChart.innerHTML = rows.map((row) => `<div class="cycle-chart-row"><div class="cycle-chart-label">${escapeHtml(displayDate(row.start))}</div><div class="cycle-bars"><div class="cycle-bar income" style="width:${Math.max(2, row.income / max * 100)}%"></div><div class="cycle-bar expense" style="width:${Math.max(2, row.expense / max * 100)}%"></div><div class="cycle-chart-values">${escapeHtml(hidden ? "••••" : `دخل ${formatMoney(row.income, currency)} · مصروف ${formatMoney(row.expense, currency)}`)}</div></div></div>`).join("");
+    }
+
+    function salaryCycleHistory(limit) {
+        const starts = salaryStartDates();
+        return starts.map((start, index) => ({ start, end: starts[index + 1] || "", isSalaryBased: true })).slice(-limit);
     }
 
     function renderOperations(currency, hidden) {
@@ -1162,10 +1359,15 @@
         ];
         parts.push(escapeHtml(entryCurrency(item)));
         if (item.category) parts.push(escapeHtml(item.category));
+        if (item.account) parts.push(escapeHtml(item.account));
         if (item.person) parts.push(escapeHtml(item.person));
         const badge = operationDateBadge(item.date);
         const text = parts.join(" · ");
-        return badge ? `${text} ${badge}` : text;
+        const receiptValue = String(item.receipt || "");
+        const receipt = /^data:image\/(?:jpeg|png|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(receiptValue)
+            ? `<img class="receipt-thumb" src="${escapeHtml(receiptValue)}" alt="صورة الفاتورة" />`
+            : "";
+        return `${badge ? `${text} ${badge}` : text}${receipt}`;
     }
 
     function operationKindLabel(item) {
@@ -1457,9 +1659,15 @@
         refs.commitmentEntries.querySelectorAll("[data-mark-paid]").forEach((button) => {
             button.addEventListener("click", () => {
                 const id = button.getAttribute("data-mark-paid");
+                const paid = state.commitments.find((item) => item.id === id);
                 state.commitments = state.commitments.map((item) => item.id === id ? { ...item, isPaid: true } : item);
+                if (paid?.recurring) {
+                    const nextDate = addCalendarMonth(paid.dueDate);
+                    const exists = state.commitments.some((item) => item.name === paid.name && item.dueDate === nextDate);
+                    if (!exists) state.commitments.unshift({ ...paid, id: crypto.randomUUID(), dueDate: nextDate, isPaid: false, createdAt: new Date().toISOString() });
+                }
                 saveState();
-                toast("تم تعليم الالتزام كمدفوع.");
+                toast(paid?.recurring ? "تم الدفع وإنشاء استحقاق الشهر القادم." : "تم تعليم الالتزام كمدفوع.");
                 render();
             });
         });
@@ -2024,15 +2232,28 @@
     }
 
     function shiftDateByInterval(startDate, interval, index) {
-        const date = new Date(startDate);
+        const date = new Date(`${String(startDate).slice(0, 10)}T12:00:00`);
         if (interval === "weekly") {
             date.setDate(date.getDate() + (index * 7));
         } else if (interval === "daily30") {
             date.setDate(date.getDate() + (index * 30));
         } else {
+            const originalDay = date.getDate();
+            date.setDate(1);
             date.setMonth(date.getMonth() + index);
+            const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+            date.setDate(Math.min(originalDay, lastDay));
         }
         return dateValue(date);
+    }
+
+    function addCalendarMonth(dateText) {
+        const source = new Date(`${String(dateText).slice(0, 10)}T12:00:00`);
+        const day = source.getDate();
+        const target = new Date(source.getFullYear(), source.getMonth() + 1, 1, 12);
+        const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+        target.setDate(Math.min(day, lastDay));
+        return dateValue(target);
     }
 
     function markInstallmentPaid(installmentId) {
@@ -2106,6 +2327,7 @@
                 })))
                 .sort((a, b) => new Date(b.dueDate || 0) - new Date(a.dueDate || 0))[0];
             const archived = state.archivedPeople.includes(name);
+            const phone = state.peopleDetails[name]?.phone || "";
             const planMeta = planStats.total
                 ? ` · دفعات ${planStats.paid}/${planStats.total} · متبقي مجدول ${formatTotals(planStats.remaining, state.profile.currency || "₪")}`
                 : "";
@@ -2118,7 +2340,7 @@
                 hasPlan: planStats.total > 0,
                 latestDebtId: latestDebt?.id || "",
                 latestInstallmentId: latestInstallment?.installmentId || "",
-                meta: `${items.length} حركة${archived ? " · مؤرشف" : ""}${planMeta}`,
+                meta: `${items.length} حركة${phone ? ` · ${phone}` : ""}${archived ? " · مؤرشف" : ""}${planMeta}`,
                 searchText: `${name} ${items.map((x) => `${x.note || ""} ${debtTypeLabel(x.type)} ${entryCurrency(x)}`).join(" ")}`.toLowerCase()
             };
         }).sort((a, b) => a.name.localeCompare(b.name, "ar"));
@@ -2208,7 +2430,7 @@
         return `<div class="list-item">
             <div>
                 <div class="list-title">${escapeHtml(item.name)}</div>
-                <div class="list-meta">${escapeHtml(item.isPaid ? "مدفوع" : "غير مدفوع")} · ${escapeHtml(displayDate(item.dueDate))} · ${escapeHtml(entryCurrency(item))}${item.note ? ` · ${escapeHtml(item.note)}` : ""}</div>
+                <div class="list-meta">${escapeHtml(item.isPaid ? "مدفوع" : "غير مدفوع")} · ${escapeHtml(displayDate(item.dueDate))} · ${escapeHtml(entryCurrency(item))}${item.recurring ? " · متكرر شهريًا" : ""}${item.note ? ` · ${escapeHtml(item.note)}` : ""}</div>
             </div>
             <div class="list-actions">
                 <div class="list-value ${item.isPaid ? "tone-income" : "tone-warning"}">${escapeHtml(hidden ? "••••" : formatMoney(item.amount, entryCurrency(item)))}</div>
@@ -2306,6 +2528,7 @@
         if (raw === "₪" || upper === "ILS" || upper === "NIS") return "₪";
         if (upper === "JD" || upper === "JOD") return "JD";
         if (raw === "$" || upper === "USD") return "$";
+        if (raw === "€" || upper === "EUR") return "€";
         return raw;
     }
 
@@ -2435,10 +2658,12 @@
                 savingGoal: Number(data.profile?.savingGoal || 0),
                 passcode: String(data.profile?.passcode || ""),
                 safeMode: !!data.profile?.safeMode,
-                hideNumbers: !!data.profile?.hideNumbers
+                hideNumbers: !!data.profile?.hideNumbers,
+                categories: Array.isArray(data.profile?.categories) && data.profile.categories.length ? data.profile.categories.map(String) : DEFAULT_STATE.profile.categories.slice(),
+                accounts: Array.isArray(data.profile?.accounts) && data.profile.accounts.length ? data.profile.accounts.map(String) : DEFAULT_STATE.profile.accounts.slice()
             },
-            incomes: Array.isArray(data.incomes) ? data.incomes.map((item) => ({ ...item, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
-            expenses: Array.isArray(data.expenses) ? data.expenses.map((item) => ({ ...item, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
+            incomes: Array.isArray(data.incomes) ? data.incomes.map((item) => ({ ...item, account: String(item.account || "نقدي"), receipt: String(item.receipt || ""), currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
+            expenses: Array.isArray(data.expenses) ? data.expenses.map((item) => ({ ...item, account: String(item.account || "نقدي"), receipt: String(item.receipt || ""), currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
             debts: Array.isArray(data.debts) ? data.debts.map((item) => ({ ...item, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
             debtPlans: Array.isArray(data.debtPlans) ? data.debtPlans.map((plan) => ({
                 ...plan,
@@ -2447,9 +2672,10 @@
                     ? plan.installments.map((installment) => ({ ...installment }))
                     : []
             })) : [],
-            commitments: Array.isArray(data.commitments) ? data.commitments.map((item) => ({ ...item, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
+            commitments: Array.isArray(data.commitments) ? data.commitments.map((item) => ({ ...item, recurring: !!item.recurring, currency: normalizeCurrency(item.currency || defaultCurrency) })) : [],
             reminders: Array.isArray(data.reminders) ? data.reminders : [],
             archivedPeople: Array.isArray(data.archivedPeople) ? data.archivedPeople : [],
+            peopleDetails: data.peopleDetails && typeof data.peopleDetails === "object" ? data.peopleDetails : {},
             monthlyArchives: Array.isArray(data.monthlyArchives) ? data.monthlyArchives.map((item) => ({
                 ...item,
                 currency: normalizeCurrency(item.currency || defaultCurrency),
@@ -2461,7 +2687,11 @@
     }
 
     function saveState() {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch {
+            window.setTimeout(() => toast("تعذر الحفظ: مساحة المتصفح ممتلئة. صدّر نسخة احتياطية واحذف بعض صور الفواتير."), 0);
+        }
     }
 
     function toast(message) {

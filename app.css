@@ -514,6 +514,25 @@ button {
     color: var(--primary-dark);
 }
 
+.receipt-thumb {
+    display: block;
+    width: 72px;
+    height: 72px;
+    margin-top: 8px;
+    border-radius: 12px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+}
+
+.cycle-chart { display: grid; gap: 14px; }
+.cycle-chart-row { display: grid; grid-template-columns: minmax(92px, 1fr) 3fr; gap: 12px; align-items: center; }
+.cycle-chart-label { font-size: .78rem; color: var(--muted); }
+.cycle-bars { display: grid; gap: 5px; }
+.cycle-bar { min-width: 2px; height: 12px; border-radius: 99px; }
+.cycle-bar.income { background: var(--success); }
+.cycle-bar.expense { background: var(--danger); }
+.cycle-chart-values { font-size: .72rem; color: var(--muted); }
+
 .list-value {
     text-align: left;
     font-weight: 900;

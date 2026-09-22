@@ -1,10 +1,10 @@
-const CACHE_NAME = "personalaccounts-web-v28";
+const CACHE_NAME = "personalaccounts-web-v29";
 const CORE = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./app.css?v=28",
-  "./app.js?v=28",
+  "./app.css?v=29",
+  "./app.js?v=29",
   "./favicon.ico"
 ];
 
