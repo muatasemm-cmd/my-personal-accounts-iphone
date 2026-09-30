@@ -11,7 +11,7 @@
     <link rel="icon" href="./favicon.ico" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=30" />
+    <link rel="stylesheet" href="./app.css?v=31" />
 </head>
 <body>
 <div class="app-shell" id="appShell">
@@ -32,7 +32,7 @@
             <header class="topbar">
                 <div>
                     <p class="eyebrow">نسخة آيفون أولية</p>
-                    <p class="version-badge">الإصدار v30 | النسخة النهائية</p>
+                    <p class="version-badge">الإصدار v31 | لوحة أرقام الآيفون</p>
                     <h1>حساباتي</h1>
                     <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
                 </div>
@@ -204,7 +204,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="expenseAmount" class="input" type="text" inputmode="none" placeholder="0.00" required readonly data-numeric-input="true" data-numeric-title="مبلغ المصروف" />
+                            <input id="expenseAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -254,7 +254,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="incomeAmount" class="input" type="text" inputmode="none" placeholder="0.00" required readonly data-numeric-input="true" data-numeric-title="مبلغ الدخل" />
+                            <input id="incomeAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -346,7 +346,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="debtAmount" class="input" type="text" inputmode="none" placeholder="0.00" required readonly data-numeric-input="true" data-numeric-title="مبلغ الحركة" />
+                            <input id="debtAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -384,7 +384,7 @@
                         </label>
                         <label class="field">
                             <span>إجمالي الدين</span>
-                            <input id="debtPlanTotal" class="input" type="text" inputmode="none" placeholder="1000" required readonly data-numeric-input="true" data-numeric-title="إجمالي الدين" />
+                            <input id="debtPlanTotal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="1000" required />
                         </label>
                     </div>
                     <div class="field-grid">
@@ -464,7 +464,7 @@
                         <div class="field-grid">
                             <label class="field">
                                 <span>المبلغ</span>
-                                <input id="installmentEditAmount" class="input" type="text" inputmode="none" placeholder="0.00" required readonly data-numeric-input="true" data-numeric-title="تعديل مبلغ الدفعة" />
+                                <input id="installmentEditAmount" class="input" type="text" inputmode="decimal" enterkeyhint="done" placeholder="0.00" required />
                             </label>
                             <label class="field">
                                 <span>التاريخ</span>
@@ -504,11 +504,11 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>سقف المصروف الشهري</span>
-                            <input id="profileBudget" class="input" type="text" inputmode="none" placeholder="0.00" readonly data-numeric-input="true" data-numeric-title="سقف المصروف الشهري" />
+                            <input id="profileBudget" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" />
                         </label>
                         <label class="field">
                             <span>هدف التوفير</span>
-                            <input id="profileSavingGoal" class="input" type="text" inputmode="none" placeholder="0.00" readonly data-numeric-input="true" data-numeric-title="هدف التوفير" />
+                            <input id="profileSavingGoal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" />
                         </label>
                     </div>
                     <label class="field">
@@ -550,7 +550,7 @@
                         </label>
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="commitmentAmount" class="input" type="text" inputmode="none" placeholder="0.00" required readonly data-numeric-input="true" data-numeric-title="مبلغ الالتزام" />
+                            <input id="commitmentAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
                         </label>
                         <label class="field">
                             <span>العملة</span>
@@ -717,42 +717,9 @@
             <button class="nav-item" type="button" data-panel-target="more"><span>المزيد</span></button>
         </nav>
 
-        <div class="numeric-pad" id="numericPad" hidden>
-            <button class="numeric-pad-backdrop" id="numericPadBackdrop" type="button" aria-label="إغلاق لوحة الأرقام"></button>
-            <div class="numeric-pad-sheet">
-                <div class="numeric-pad-head">
-                    <div>
-                        <p class="eyebrow">لوحة أرقام خاصة</p>
-                        <strong id="numericPadTitle">إدخال المبلغ</strong>
-                    </div>
-                    <button class="chip chip-dark" id="numericPadClose" type="button">إغلاق</button>
-                </div>
-                <div class="numeric-pad-screen" id="numericPadPreview">0</div>
-                <div class="numeric-pad-grid">
-                    <button class="numeric-key" type="button" data-numeric-key="1">1</button>
-                    <button class="numeric-key" type="button" data-numeric-key="2">2</button>
-                    <button class="numeric-key" type="button" data-numeric-key="3">3</button>
-                    <button class="numeric-key" type="button" data-numeric-key="4">4</button>
-                    <button class="numeric-key" type="button" data-numeric-key="5">5</button>
-                    <button class="numeric-key" type="button" data-numeric-key="6">6</button>
-                    <button class="numeric-key" type="button" data-numeric-key="7">7</button>
-                    <button class="numeric-key" type="button" data-numeric-key="8">8</button>
-                    <button class="numeric-key" type="button" data-numeric-key="9">9</button>
-                    <button class="numeric-key numeric-key-muted" type="button" data-numeric-key=".">.</button>
-                    <button class="numeric-key" type="button" data-numeric-key="0">0</button>
-                    <button class="numeric-key numeric-key-muted" type="button" data-numeric-key="00">00</button>
-                </div>
-                <div class="numeric-pad-actions">
-                    <button class="button button-outline" id="numericPadClear" type="button">مسح</button>
-                    <button class="button button-outline" id="numericPadBackspace" type="button">حذف رقم</button>
-                    <button class="button button-primary" id="numericPadDone" type="button">تم</button>
-                </div>
-            </div>
-        </div>
-
         <div class="toast" id="toastMessage" hidden></div>
     </div>
-<script src="./app.js?v=30"></script>
+<script src="./app.js?v=31"></script>
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));
