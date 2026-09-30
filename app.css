@@ -714,6 +714,7 @@ body.keyboard-open .bottom-nav {
     direction: ltr;
     unicode-bidi: plaintext;
     font-variant-numeric: tabular-nums;
+    -webkit-locale: "en-US";
 }
 
 .nav-item {

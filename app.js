@@ -1,6 +1,6 @@
 ﻿(function () {
     const STORAGE_KEY = "personalaccounts.iphone.v1";
-    const APP_VERSION = "32";
+    const APP_VERSION = "33";
     const DB_NAME = "personalaccounts.final.v1";
     const DEFAULT_STATE = {
         profile: {
@@ -233,7 +233,7 @@
 
     function bindEnglishNumberInputs() {
         document.querySelectorAll("[data-english-number]").forEach((input) => {
-            input.addEventListener("input", () => {
+            const normalizeInput = () => {
                 const original = input.value;
                 const next = normalizeEnglishNumber(original, input.dataset.englishNumber !== "integer");
                 if (next === original) return;
@@ -244,7 +244,30 @@
                     const nextCursor = Math.max(0, cursor - Math.max(0, removed));
                     input.setSelectionRange(nextCursor, nextCursor);
                 }
+            };
+
+            input.addEventListener("beforeinput", (event) => {
+                if (!event.data || event.isComposing) return;
+                const allowDecimal = input.dataset.englishNumber !== "integer";
+                const converted = normalizeEnglishNumber(event.data, allowDecimal);
+                if (converted === event.data || !event.cancelable) return;
+                event.preventDefault();
+                const start = input.selectionStart ?? input.value.length;
+                const end = input.selectionEnd ?? start;
+                input.setRangeText(converted, start, end, "end");
+                input.dispatchEvent(new Event("input", { bubbles: true }));
             });
+
+            input.addEventListener("input", () => {
+                normalizeInput();
+                window.setTimeout(normalizeInput, 0);
+                window.setTimeout(normalizeInput, 40);
+            });
+            input.addEventListener("compositionend", normalizeInput);
+            input.addEventListener("keyup", normalizeInput);
+            input.addEventListener("change", normalizeInput);
+            input.addEventListener("blur", normalizeInput);
+            normalizeInput();
         });
     }
 
@@ -704,7 +727,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v32.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v33.");
     }
 
     function startSetup() {
