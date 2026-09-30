@@ -11,7 +11,7 @@
     <link rel="icon" href="./favicon.ico" />
     <link rel="apple-touch-icon" href="./icon-192.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=31" />
+    <link rel="stylesheet" href="./app.css?v=32" />
 </head>
 <body>
 <div class="app-shell" id="appShell">
@@ -21,7 +21,7 @@
                 <h1>حساباتي</h1>
                 <p>أدخل رمز هذا الجهاز للمتابعة.</p>
                 <form id="unlockForm" class="stack">
-                    <input id="unlockCode" class="input center" type="password" inputmode="numeric" maxlength="12" placeholder="رمز القفل" />
+                    <input id="unlockCode" class="input center" type="password" inputmode="numeric" maxlength="12" placeholder="رمز القفل" lang="en-US" dir="ltr" data-english-number="integer" />
                     <button class="button button-primary" type="submit">فتح التطبيق</button>
                     <p class="helper error" id="unlockError"></p>
                 </form>
@@ -32,7 +32,7 @@
             <header class="topbar">
                 <div>
                     <p class="eyebrow">نسخة آيفون أولية</p>
-                    <p class="version-badge">الإصدار v31 | لوحة أرقام الآيفون</p>
+                    <p class="version-badge">الإصدار v32 | أرقام إنجليزية</p>
                     <h1>حساباتي</h1>
                     <p class="subtitle">إدارة يومية شخصية، محلية، وسريعة على نفس الجهاز.</p>
                 </div>
@@ -204,7 +204,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="expenseAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
+                            <input id="expenseAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -254,7 +254,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="incomeAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
+                            <input id="incomeAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -346,7 +346,7 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="debtAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
+                            <input id="debtAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                         <label class="field">
                             <span>التاريخ</span>
@@ -384,7 +384,7 @@
                         </label>
                         <label class="field">
                             <span>إجمالي الدين</span>
-                            <input id="debtPlanTotal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="1000" required />
+                            <input id="debtPlanTotal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="1000" required lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                     </div>
                     <div class="field-grid">
@@ -464,7 +464,7 @@
                         <div class="field-grid">
                             <label class="field">
                                 <span>المبلغ</span>
-                                <input id="installmentEditAmount" class="input" type="text" inputmode="decimal" enterkeyhint="done" placeholder="0.00" required />
+                                <input id="installmentEditAmount" class="input" type="text" inputmode="decimal" enterkeyhint="done" placeholder="0.00" required lang="en-US" dir="ltr" data-english-number="decimal" />
                             </label>
                             <label class="field">
                                 <span>التاريخ</span>
@@ -504,16 +504,16 @@
                     <div class="field-grid">
                         <label class="field">
                             <span>سقف المصروف الشهري</span>
-                            <input id="profileBudget" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" />
+                            <input id="profileBudget" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                         <label class="field">
                             <span>هدف التوفير</span>
-                            <input id="profileSavingGoal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" />
+                            <input id="profileSavingGoal" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                     </div>
                     <label class="field">
                         <span>رمز قفل اختياري</span>
-                        <input id="profilePasscode" class="input" type="password" inputmode="numeric" maxlength="12" placeholder="1234" />
+                        <input id="profilePasscode" class="input" type="password" inputmode="numeric" maxlength="12" placeholder="1234" lang="en-US" dir="ltr" data-english-number="integer" />
                     </label>
                     <button class="button button-primary" type="submit">حفظ الخطة والإعدادات</button>
                 </form>
@@ -550,7 +550,7 @@
                         </label>
                         <label class="field">
                             <span>المبلغ</span>
-                            <input id="commitmentAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required />
+                            <input id="commitmentAmount" class="input" type="text" inputmode="decimal" enterkeyhint="next" placeholder="0.00" required lang="en-US" dir="ltr" data-english-number="decimal" />
                         </label>
                         <label class="field">
                             <span>العملة</span>
@@ -719,7 +719,7 @@
 
         <div class="toast" id="toastMessage" hidden></div>
     </div>
-<script src="./app.js?v=31"></script>
+<script src="./app.js?v=32"></script>
 <script>
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => navigator.serviceWorker.register("./service-worker.js"));

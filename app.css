@@ -710,6 +710,12 @@ body.keyboard-open .bottom-nav {
     display: none;
 }
 
+[data-english-number] {
+    direction: ltr;
+    unicode-bidi: plaintext;
+    font-variant-numeric: tabular-nums;
+}
+
 .nav-item {
     flex: 1 1 0;
     min-height: 46px;

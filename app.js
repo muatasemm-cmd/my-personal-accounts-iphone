@@ -1,6 +1,6 @@
 ﻿(function () {
     const STORAGE_KEY = "personalaccounts.iphone.v1";
-    const APP_VERSION = "31";
+    const APP_VERSION = "32";
     const DB_NAME = "personalaccounts.final.v1";
     const DEFAULT_STATE = {
         profile: {
@@ -142,6 +142,7 @@
     let suppressUndo = false;
 
     function bind() {
+        bindEnglishNumberInputs();
         document.querySelectorAll("[data-panel-target]").forEach((button) => {
             button.addEventListener("click", () => switchPanel(button.getAttribute("data-panel-target")));
         });
@@ -228,6 +229,40 @@
 
         document.addEventListener("focusin", handleKeyboardFocus, true);
         document.addEventListener("focusout", handleKeyboardBlur, true);
+    }
+
+    function bindEnglishNumberInputs() {
+        document.querySelectorAll("[data-english-number]").forEach((input) => {
+            input.addEventListener("input", () => {
+                const original = input.value;
+                const next = normalizeEnglishNumber(original, input.dataset.englishNumber !== "integer");
+                if (next === original) return;
+                const cursor = input.selectionStart;
+                input.value = next;
+                if (cursor !== null && input.setSelectionRange) {
+                    const removed = original.length - next.length;
+                    const nextCursor = Math.max(0, cursor - Math.max(0, removed));
+                    input.setSelectionRange(nextCursor, nextCursor);
+                }
+            });
+        });
+    }
+
+    function normalizeEnglishNumber(input, allowDecimal = true) {
+        let normalized = String(input || "")
+            .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+            .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+            .replace(/[٫,]/g, ".")
+            .replace(/٬/g, "")
+            .replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, "");
+
+        if (allowDecimal) {
+            const decimalIndex = normalized.indexOf(".");
+            if (decimalIndex >= 0) {
+                normalized = normalized.slice(0, decimalIndex + 1) + normalized.slice(decimalIndex + 1).replace(/\./g, "");
+            }
+        }
+        return normalized;
     }
 
     function handleKeyboardFocus(event) {
@@ -669,7 +704,7 @@
     }
 
     function showInstallHint() {
-        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v31.");
+        toast("من Safari اضغط مشاركة ثم أضفه للشاشة الرئيسية. هذه نسخة v32.");
     }
 
     function startSetup() {
@@ -2752,11 +2787,7 @@
 
     function value(id) { return String(document.getElementById(id).value || "").trim(); }
     function amount(id) {
-        const raw = String(document.getElementById(id).value || 0)
-            .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
-            .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
-            .replace(/٬/g, "")
-            .replace(/[٫,]/g, ".");
+        const raw = normalizeEnglishNumber(document.getElementById(id).value || 0, true);
         const parsed = Number(raw);
         return Number.isFinite(parsed) ? parsed : 0;
     }
